@@ -1,0 +1,212 @@
+<app-dashboard-layout pageTitle="Employees">
+  <div class="page">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-filters">
+        <input
+          type="text"
+          class="form-input toolbar-search"
+          placeholder="Search by name, code, or email..."
+          (input)="onSearch($any($event.target).value)"
+        />
+        <div class="filter-group">
+          <label class="filter-label" for="emp-designation-filter">Designation</label>
+          <select
+            id="emp-designation-filter"
+            class="form-select toolbar-filter"
+            [value]="designationFilter() || 'ALL'"
+            (change)="onFilter($any($event.target).value)"
+          >
+            @for (d of designations; track d) {
+              <option [value]="d">{{ d === 'ALL' ? 'All Designations' : d }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <a routerLink="/dashboard/employees/create" class="btn btn-primary">
+        + Add Employee
+      </a>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-box">Loading employees…</div>
+    } @else if (employees().length === 0) {
+      <div class="empty-box">
+        <p>No employees match your filters.</p>
+      </div>
+    } @else {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Designation</th>
+              <th>Status</th>
+              <th>Last Login</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of employees(); track trackByCode($index, item)) {
+              <tr (click)="open(item)" (keydown.enter)="open(item)" (keydown.space)="open(item); $event.preventDefault()" class="clickable" tabindex="0">
+                <td>{{ item.employee.employeeCode }}</td>
+                <td>{{ item.employee.name }}</td>
+                <td>{{ item.employee.email }}</td>
+                <td>{{ item.employee.department }}</td>
+                <td>
+                  <span class="badge">{{ item.employee.designation }}</span>
+                </td>
+                <td>
+                  <span class="status status--{{ item.status.toLowerCase() }}">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td><app-last-login-cell [timestamp]="item.lastLoginAt" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [total]="total()"
+          (pageChange)="goToPage($event)" />
+      }
+    }
+  </div>
+
+  <!-- Detail modal -->
+  @if (selected(); as item) {
+    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">{{ item.employee.name }}</h3>
+            <p class="modal-sub">
+              {{ item.employee.employeeCode }} ·
+              {{ item.employee.designation }}
+            </p>
+          </div>
+          <div class="modal-header-actions">
+            @if (item.employee.designation === 'DOCTOR') {
+              <button type="button" class="btn btn-secondary btn-sm" [disabled]="deleting()" (click)="viewDoctorRecords(item)">
+                View Medical Records
+              </button>
+            }
+            @if (canEdit(item)) {
+              <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="editEmployee(item)">
+                Edit
+              </button>
+            }
+            <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ item.employee.email }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ item.employee.phone }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Department</span>
+              <span class="detail-value">{{ item.employee.department }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Status</span>
+              <span class="detail-value">{{ item.status }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Joining Date</span>
+              <span class="detail-value">
+                @if (item.employee.joiningDate) {
+                  {{ item.employee.joiningDate | date: 'mediumDate' }}
+                } @else {
+                  —
+                }
+              </span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Qualification</span>
+              <span class="detail-value">
+                {{ (item.employee.qualification || []).join(', ') || '—' }}
+              </span>
+            </div>
+            @if (item.employee.medicalRegistrationNumber) {
+              <div class="detail">
+                <span class="detail-label">Med. Registration No</span>
+                <span class="detail-value">
+                  {{ item.employee.medicalRegistrationNumber }}
+                </span>
+              </div>
+            }
+            @if (item.employee.specialization) {
+              <div class="detail">
+                <span class="detail-label">Specialization</span>
+                <span class="detail-value">
+                  {{ item.employee.specialization }}
+                </span>
+              </div>
+            }
+            @if (item.employee.consultationFee != null) {
+              <div class="detail">
+                <span class="detail-label">Consultation Fee</span>
+                <span class="detail-value">
+                  {{ item.employee.consultationFee }}
+                </span>
+              </div>
+            }
+            @if (item.employee.bookingCutoffDate) {
+              <div class="detail">
+                <span class="detail-label">Booking Cutoff</span>
+                <span class="detail-value">
+                  {{ item.employee.bookingCutoffDate | date: 'mediumDate' }}
+                </span>
+              </div>
+            }
+          </div>
+
+          @if (item.employee.availabilitySlots?.length) {
+            <h4 class="detail-section">Availability</h4>
+            <ul class="slot-list">
+              @for (s of item.employee.availabilitySlots | sortAvailabilitySlots; track $index) {
+                <li>
+                  <strong>{{ s.day }}:</strong> {{ s.startTime }} – {{ s.endTime }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
+            Close
+          </button>
+          @if (canDelete(item)) {
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="deleting()"
+              (click)="deleteEmployee(item)"
+            >
+              @if (deleting()) {
+                <span>Deleting…</span>
+              } @else {
+                <span>Delete</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-dashboard-layout>

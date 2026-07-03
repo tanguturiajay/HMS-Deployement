@@ -1,0 +1,63 @@
+@if (modalService.modalState().isOpen) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" (keydown.escape)="onCancel()">
+    <div class="modal-box" [class]="'modal-box--' + modalService.modalState().config.type">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-icon" [class]="'modal-icon--' + modalService.modalState().config.type">
+          @if (modalService.modalState().config.type === 'danger') { 🗑 }
+          @if (modalService.modalState().config.type === 'warning') { ⚠ }
+          @if (modalService.modalState().config.type === 'success') { ✓ }
+          @if (modalService.modalState().config.type === 'info')    { ℹ }
+        </div>
+        <button class="modal-close" (click)="onCancel()">✕</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <h3 class="modal-title">
+          {{ modalService.modalState().config.title }}
+        </h3>
+        <p class="modal-message">
+          {{ modalService.modalState().config.message }}
+        </p>
+
+        <!-- Optional Input (for cancel reason, etc.) -->
+        @if (modalService.modalState().config.showInput) {
+          <div class="modal-input-group">
+            <label class="modal-input-label" for="modal-input">
+              {{ modalService.modalState().config.inputLabel }}
+            </label>
+            <input
+              id="modal-input"
+              type="text"
+              class="form-input"
+              [placeholder]="modalService.modalState().config.inputPlaceholder || ''"
+              [value]="inputValue()"
+              (input)="inputValue.set($any($event.target).value)"
+            />
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button
+          class="btn btn-secondary"
+          (click)="onCancel()"
+        >
+          {{ modalService.modalState().config.cancelText }}
+        </button>
+        <button
+          [class]="'btn btn-' + (modalService.modalState().config.type === 'danger' ? 'danger' :
+                                  modalService.modalState().config.type === 'success' ? 'success' : 'primary')"
+          [disabled]="modalService.modalState().config.showInput && !inputValue().trim()"
+          (click)="onConfirm()"
+        >
+          {{ modalService.modalState().config.confirmText }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

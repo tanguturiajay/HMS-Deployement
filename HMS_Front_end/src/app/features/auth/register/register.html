@@ -1,0 +1,215 @@
+<div class="auth-container">
+  <div class="register-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2>Employee Registration</h2>
+        <p>Join our hospital management team</p>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+
+          <!-- Username -->
+          <div class="form-group">
+            <label class="form-label" for="register-username-1">Username <span class="form-required">*</span></label>
+            <input id="register-username-1" type="text" formControlName="username" class="form-input"
+              placeholder="john.doe" />
+            @if (registerForm.get('username')?.invalid && registerForm.get('username')?.touched) {
+            <p class="form-error">Username is required</p>
+            }
+          </div>
+
+          <!-- Name -->
+          <div class="form-group">
+            <label class="form-label" for="register-full-name-2">Full Name <span class="form-required">*</span></label>
+            <input id="register-full-name-2" type="text" formControlName="name" class="form-input"
+              placeholder="John Doe" />
+            @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
+              @if (registerForm.get('name')?.hasError('name')) {
+              <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+              } @else {
+              <p class="form-error">Name is required</p>
+              }
+            }
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label class="form-label" for="register-email-3">Email <span class="form-required">*</span></label>
+            <input id="register-email-3" type="email" formControlName="email" class="form-input"
+              placeholder="john.doe@hospital.com" />
+            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            <p class="form-error">Valid email is required</p>
+            }
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label class="form-label" for="register-phone-4">Phone <span class="form-required">*</span></label>
+            <input id="register-phone-4" type="tel" formControlName="phone" class="form-input"
+              placeholder="+91 1234567890" />
+            @if (registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched) {
+            <p class="form-error">
+              Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+            </p>
+            }
+          </div>
+
+          <!-- Department -->
+          <div class="form-group">
+            <label class="form-label" for="register-department-5">Department <span class="form-required">*</span></label>
+            <select id="register-department-5" formControlName="department" (change)="onDepartmentChange()" class="form-select">
+              <option value="">Select Department</option>
+              @for (dept of departments; track dept) {
+              <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+            @if (registerForm.get('department')?.invalid && registerForm.get('department')?.touched) {
+            <p class="form-error">Department is required</p>
+            }
+          </div>
+
+          <!-- Designation -->
+          <div class="form-group">
+            <label class="form-label" for="register-designation-6">Designation <span class="form-required">*</span></label>
+            <select id="register-designation-6" formControlName="designation" (change)="onDesignationChange()"
+              class="form-select">
+              <option value="">Select Designation</option>
+              @for (d of designations; track d) {
+              <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            @if (registerForm.get('designation')?.invalid && registerForm.get('designation')?.touched) {
+            <p class="form-error">Designation is required</p>
+            }
+          </div>
+
+          <!-- Joining Date -->
+          <div class="form-group">
+            <label class="form-label" for="register-joining-date-7">Joining Date <span class="form-required">*</span></label>
+            <input id="register-joining-date-7" type="date" formControlName="joiningDate" class="form-input" />
+            @if (registerForm.get('joiningDate')?.invalid && registerForm.get('joiningDate')?.touched) {
+            <p class="form-error">Joining date is required</p>
+            }
+          </div>
+
+          <!-- Qualification -->
+          <div class="form-group">
+            <label class="form-label" for="register-qualification-8">Qualification <span class="form-required">*</span></label>
+            <input id="register-qualification-8" type="text" formControlName="qualification" class="form-input"
+              placeholder="MBBS, MD (comma separated)" />
+            @if (registerForm.get('qualification')?.invalid && registerForm.get('qualification')?.touched) {
+            <p class="form-error">At least one qualification is required</p>
+            }
+          </div>
+
+          <!-- Medical Registration No (medical designations) -->
+          @if (showMedicalFields) {
+          <div class="form-group">
+            <label class="form-label" for="register-medical-registration-no-9">Medical Registration No <span class="form-required">*</span></label>
+            <input id="register-medical-registration-no-9" type="text" formControlName="medicalRegistrationNumber"
+              class="form-input" placeholder="MED-12345" />
+            @if (registerForm.get('medicalRegistrationNumber')?.invalid &&
+            registerForm.get('medicalRegistrationNumber')?.touched) {
+              @if (registerForm.get('medicalRegistrationNumber')?.hasError('medicalRegistration')) {
+              <p class="form-error">Must start with 'MED-' followed by numbers and hyphens (e.g. MED-12345)</p>
+              } @else {
+              <p class="form-error">Medical registration number is required</p>
+              }
+            }
+          </div>
+          }
+
+          <!-- Specialization (doctor / lab tech) -->
+          @if (showSpecialization) {
+          <div class="form-group">
+            <label class="form-label" for="register-specialization-10">Specialization <span class="form-required">*</span></label>
+            <input id="register-specialization-10" type="text" formControlName="specialization" class="form-input"
+              placeholder="Cardiology" />
+            @if (registerForm.get('specialization')?.invalid && registerForm.get('specialization')?.touched) {
+            <p class="form-error">Specialization is required</p>
+            }
+          </div>
+          }
+
+          <!-- Consultation Fee (doctor) -->
+          @if (isDoctor) {
+          <div class="form-group">
+            <label class="form-label" for="register-consultation-fee-11">Consultation Fee <span class="form-required">*</span></label>
+            <input id="register-consultation-fee-11" type="number" formControlName="consultationFee" class="form-input"
+              placeholder="500" min="0" />
+            @if (registerForm.get('consultationFee')?.invalid && registerForm.get('consultationFee')?.touched) {
+            <p class="form-error">Consultation fee is required</p>
+            }
+          </div>
+          }
+
+          <!-- Password -->
+          <div class="form-group">
+            <label class="form-label" for="register-password-12">Password <span class="form-required">*</span></label>
+            <app-password-input inputId="register-password-12" formControlName="password" placeholder="Min 8 characters"
+              [autocomplete]="'new-password'"></app-password-input>
+            <!-- Live (before submit): required + min length -->
+            @if (registerForm.get('password')?.touched) {
+            @if (registerForm.get('password')?.hasError('required')) {
+            <p class="form-error">Password is required</p>
+            }
+            @if (registerForm.get('password')?.hasError('minlength')) {
+            <p class="form-error">Must be at least 8 characters</p>
+            }
+            }
+            <!-- After submit: character-class rules -->
+            @if (attempted) {
+            @if (registerForm.get('password')?.hasError('uppercase')) {
+            <p class="form-error">Must contain an uppercase letter</p>
+            }
+            @if (registerForm.get('password')?.hasError('lowercase')) {
+            <p class="form-error">Must contain a lowercase letter</p>
+            }
+            @if (registerForm.get('password')?.hasError('number')) {
+            <p class="form-error">Must contain a number</p>
+            }
+            @if (registerForm.get('password')?.hasError('special')) {
+            <p class="form-error">Must contain a special character</p>
+            }
+            }
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group">
+            <label class="form-label" for="register-confirm-password-13">Confirm Password <span class="form-required">*</span></label>
+            <input id="register-confirm-password-13" type="password" formControlName="confirmPassword"
+              class="form-input" placeholder="Confirm password" />
+            @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
+            <p class="form-error">Passwords must match</p>
+            }
+          </div>
+        </div>
+
+        <!-- Availability Slots (doctor) -->
+        @if (isDoctor) {
+        <app-availability-slots-form
+          [formArray]="availabilitySlots"
+          [weekDays]="weekDays"
+          (addSlot)="addSlot()"
+          (removeSlot)="removeSlot($event)"
+        />
+        }
+
+        <div class="form-submit">
+          <button type="submit" [disabled]="loading" class="btn btn-primary btn-full">
+            @if (loading) { <span>Registering...</span> }
+            @else { <span>Register</span> }
+          </button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <p>
+          Already have an account?
+          <a routerLink="/login" class="auth-link-primary">Login here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

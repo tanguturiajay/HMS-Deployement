@@ -1,0 +1,128 @@
+<app-dashboard-layout [pageTitle]="pageTitle">
+  <div class="page">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">{{ mode === 'edit' ? 'Edit Appointment' : 'New Appointment' }}</h3>
+        <p class="card-sub">
+          {{ mode === 'edit'
+            ? 'Update the patient, doctor, or time slot for this appointment.'
+            : 'Pick the patient and doctor, then select an available time slot.' }}
+        </p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card-body">
+        <div class="form-grid">
+          <!-- Patient: searchable -->
+          <div class="form-group">
+            <label class="form-label" for="appointment-book-patient-1">Patient <span class="form-required">*</span></label>
+            <app-searchable-select controlId="appointment-book-patient-1"
+              formControlName="patientUHID"
+              [options]="patientOptions()"
+              valueKey="value"
+              labelKey="label"
+              sublabelKey="sublabel"
+              placeholder="Select a patient"
+              searchPlaceholder="Search by name, UHID, phone..."
+              [onSearch]="onPatientSearch"
+            ></app-searchable-select>
+            @if (form.get('patientUHID')?.touched && form.get('patientUHID')?.invalid) {
+              <p class="form-error">Patient is required</p>
+            }
+          </div>
+
+          <!-- Doctor: searchable -->
+          <div class="form-group">
+            <label class="form-label" for="appointment-book-doctor-2">Doctor <span class="form-required">*</span></label>
+            <app-searchable-select controlId="appointment-book-doctor-2"
+              formControlName="doctorEmployeeId"
+              [options]="doctorOptions()"
+              valueKey="value"
+              labelKey="label"
+              sublabelKey="sublabel"
+              placeholder="Select a doctor"
+              searchPlaceholder="Search by name or specialization..."
+            ></app-searchable-select>
+            @if (form.get('doctorEmployeeId')?.touched && form.get('doctorEmployeeId')?.invalid) {
+              <p class="form-error">Doctor is required</p>
+            }
+          </div>
+
+          <!-- Date: only the doctor's available weekdays, within joining/cutoff/6-month bounds -->
+          <div class="form-group">
+            <span class="form-label">Appointment Date <span class="form-required">*</span></span>
+            <app-availability-calendar
+              formControlName="appointmentDate"
+              [availableDays]="doctorAvailableDays"
+              [minDate]="minDate()"
+              [maxDate]="maxIso"
+              [cutoffDate]="doctorCutoffIso"
+            ></app-availability-calendar>
+            @if (form.get('appointmentDate')?.touched) {
+              @if (form.get('appointmentDate')?.hasError('required')) {
+                <p class="form-error">Appointment date is required</p>
+              }
+              @if (form.get('appointmentDate')?.hasError('pastDate')) {
+                <p class="form-error">Appointments cannot be booked for past dates</p>
+              }
+              @if (form.get('appointmentDate')?.hasError('beforeJoining')) {
+                <p class="form-error">
+                  Doctor has not joined yet. Earliest date is {{ doctorJoinDisplay() }}
+                </p>
+              }
+            }
+          </div>
+
+          <!-- Fee summary -->
+          @if (selectedDoctor) {
+            <div class="form-group">
+              <span class="form-label">Consultation Fee</span>
+              <div class="fee-pill">
+                @if (selectedDoctor.consultationFee != null) {
+                  ₹ {{ selectedDoctor.consultationFee }}
+                } @else {
+                  Not set
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Slots -->
+        <div class="slots-block">
+          <div class="slots-header">
+            <span class="form-label">Time Slot <span class="form-required">*</span></span>
+            @if (loadingSlots()) {
+              <span class="muted">Checking availability…</span>
+            }
+          </div>
+          <app-slot-picker
+            formControlName="timeSlot"
+            [slots]="availableSlots()"
+            [bookedSlots]="bookedSlots()"
+            [emptyText]="
+              !form.get('doctorEmployeeId')?.value || !form.get('appointmentDate')?.value
+                ? 'Select a doctor and date to see available slots'
+                : 'The doctor is not available on this day'
+            "
+          ></app-slot-picker>
+          @if (form.get('timeSlot')?.touched && form.get('timeSlot')?.invalid) {
+            <p class="form-error">Please pick an available time slot</p>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="onCancel()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || (mode === 'edit' && !hasChanges())">
+            @if (loading) {
+              <span>{{ mode === 'edit' ? 'Saving…' : 'Booking…' }}</span>
+            } @else {
+              <span>{{ mode === 'edit' ? 'Save Changes' : 'Book Appointment' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-dashboard-layout>

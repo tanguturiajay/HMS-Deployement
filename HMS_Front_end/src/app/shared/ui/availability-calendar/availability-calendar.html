@@ -1,0 +1,51 @@
+<div class="calendar" [class.calendar--disabled]="disabled">
+  <div class="cal-header">
+    <button
+      type="button"
+      class="cal-nav"
+      [disabled]="!canPrev() || disabled"
+      (click)="prevMonth()"
+      aria-label="Previous month">
+      ‹
+    </button>
+    <span class="cal-month">{{ monthLabel() }}</span>
+    <button
+      type="button"
+      class="cal-nav"
+      [disabled]="!canNext() || disabled"
+      (click)="nextMonth()"
+      aria-label="Next month">
+      ›
+    </button>
+  </div>
+
+  <div class="cal-grid cal-weekdays">
+    @for (label of weekdayLabels; track label) {
+      <span class="cal-weekday">{{ label }}</span>
+    }
+  </div>
+
+  @for (week of weeks(); track $index) {
+    <div class="cal-grid">
+      @for (cell of week; track trackByIso($index, cell)) {
+        @if (cell) {
+          <button
+            type="button"
+            class="cal-day"
+            [class.cal-day--selected]="isSelected(cell)"
+            [class.cal-day--today]="cell.today"
+            [disabled]="!cell.selectable"
+            (click)="pick(cell)">
+            {{ cell.day }}
+          </button>
+        } @else {
+          <span class="cal-day cal-day--empty"></span>
+        }
+      }
+    </div>
+  }
+
+  @if (!hasAvailability()) {
+    <p class="cal-hint">{{ emptyText }}</p>
+  }
+</div>

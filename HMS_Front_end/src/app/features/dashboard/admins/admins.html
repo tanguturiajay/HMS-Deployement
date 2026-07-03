@@ -1,0 +1,119 @@
+<app-dashboard-layout pageTitle="Administrators">
+  <div class="page">
+    <div class="toolbar">
+      <h3 class="toolbar-title">All Administrators</h3>
+      <a routerLink="/dashboard/admins/create" class="btn btn-primary">
+        + Add Admin
+      </a>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-box">Loading admins…</div>
+    } @else if (admins().length === 0) {
+      <div class="empty-box">
+        <p>No administrators yet.</p>
+      </div>
+    } @else {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Last Login</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of admins(); track trackByCode($index, item)) {
+              <tr (click)="open(item)" (keydown.enter)="open(item)" (keydown.space)="open(item); $event.preventDefault()" class="clickable" tabindex="0">
+                <td>{{ item.employee.employeeCode }}</td>
+                <td>{{ item.employee.name }}</td>
+                <td>{{ item.employee.email }}</td>
+                <td>{{ item.employee.phone }}</td>
+                <td>
+                  <span class="status status--{{ item.status.toLowerCase() }}">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td><app-last-login-cell [timestamp]="item.lastLoginAt" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [total]="total()"
+          (pageChange)="goToPage($event)" />
+      }
+    }
+  </div>
+
+  @if (selected(); as item) {
+    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">{{ item.employee.name }}</h3>
+            <p class="modal-sub">{{ item.employee.employeeCode }} · ADMIN</p>
+          </div>
+          <div class="modal-header-actions">
+            <a [routerLink]="['/dashboard/admins', item.employee.employeeCode, 'edit']"
+              class="btn btn-primary btn-sm">
+              Edit
+            </a>
+            <button type="button" class="modal-close" (click)="close()">✕</button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ item.employee.email }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ item.employee.phone }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Department</span>
+              <span class="detail-value">{{ item.employee.department }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Status</span>
+              <span class="detail-value">{{ item.status }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Joining Date</span>
+              <span class="detail-value">
+                @if (item.employee.joiningDate) {
+                  {{ item.employee.joiningDate | date: 'mediumDate' }}
+                } @else { — }
+              </span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Qualification</span>
+              <span class="detail-value">
+                {{ (item.employee.qualification || []).join(', ') || '—' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="close()">
+            Close
+          </button>
+          <button type="button" class="btn btn-danger" (click)="deleteAdmin(item)">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</app-dashboard-layout>

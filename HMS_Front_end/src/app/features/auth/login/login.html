@@ -1,0 +1,77 @@
+<div class="auth-container">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2>Welcome Back</h2>
+        <p>Login to your account</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            formControlName="email"
+            class="form-input"
+            placeholder="your.email@hospital.com"
+          />
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <p class="form-error">Valid email is required</p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <app-password-input
+            inputId="login-password"
+            formControlName="password"
+            placeholder="••••••••"
+          ></app-password-input>
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <p class="form-error">Password is required</p>
+          }
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="auth-link-wrapper">
+          <a routerLink="/forgot-password" class="auth-link">
+            Forgot Password?
+          </a>
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage) {
+          <div class="alert alert-error">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || loading"
+          class="btn btn-primary btn-full"
+        >
+          @if (loading) {
+            <span>Logging in...</span>
+          } @else {
+            <span>Login</span>
+          }
+        </button>
+      </form>
+
+      <!-- Register Link -->
+      <div class="auth-footer">
+        <p>
+          Don't have an account?
+          <a routerLink="/register" class="auth-link-primary">
+            Register as Employee
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

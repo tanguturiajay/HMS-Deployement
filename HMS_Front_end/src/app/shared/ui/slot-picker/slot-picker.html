@@ -1,0 +1,27 @@
+@if (slots.length === 0) {
+  <p class="sp-empty">{{ emptyText }}</p>
+} @else {
+  <div class="sp-grid">
+    @for (slot of slots; track trackBySlot($index, slot)) {
+      <button
+        type="button"
+        class="sp-slot"
+        [class.booked]="isBooked(slot)"
+        [class.selected]="isSelected(slot)"
+        [disabled]="isBooked(slot) || disabled"
+        (click)="pick(slot)"
+      >
+        {{ slot }}
+      </button>
+    }
+  </div>
+
+  <div class="sp-legend">
+    <span class="sp-legend-item">
+      <span class="sp-dot sp-dot-available"></span> Available
+    </span>
+    <span class="sp-legend-item">
+      <span class="sp-dot sp-dot-booked"></span> Booked
+    </span>
+  </div>
+}

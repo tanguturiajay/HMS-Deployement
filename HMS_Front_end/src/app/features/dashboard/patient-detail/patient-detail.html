@@ -1,0 +1,267 @@
+<app-dashboard-layout pageTitle="Patient Details">
+  <div class="page">
+    @if (loading()) {
+      <div class="loading-box">Loading patient…</div>
+    } @else if (patient(); as p) {
+      <!-- View mode -->
+      @if (!editing()) {
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">{{ p.name }}</h3>
+              <p class="card-sub">
+                {{ p.UHID }} ·
+                <span class="status status--{{ p.status.toLowerCase() }}">
+                  {{ p.status }}
+                </span>
+              </p>
+            </div>
+            <div class="header-actions">
+              <a
+                class="btn btn-secondary"
+                routerLink="/dashboard/medical-records"
+                [queryParams]="{ patientUHID: p.UHID, patientName: p.name }">
+                View Medical Records
+              </a>
+              <button class="btn btn-primary" [disabled]="deleting()" (click)="startEdit()">Edit</button>
+              @if (isPrivileged()) {
+                <button class="btn btn-danger" [disabled]="deleting()" (click)="deletePatient()">
+                  @if (deleting()) {
+                    <span>Deleting…</span>
+                  } @else {
+                    <span>Delete</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="card-body">
+            <h4 class="section-title">Personal Information</h4>
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ p.email }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Phone</span>
+                <span class="detail-value">{{ p.phone }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Gender</span>
+                <span class="detail-value">{{ p.gender }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Date of Birth</span>
+                <span class="detail-value">{{ p.dob | date: 'mediumDate' }}</span>
+              </div>
+            </div>
+
+            <h4 class="section-title">Address</h4>
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">House Name</span>
+                <span class="detail-value">{{ p.address.houseName }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">House Number</span>
+                <span class="detail-value">{{ p.address.houseNumber }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">City</span>
+                <span class="detail-value">{{ p.address.city }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Post Code</span>
+                <span class="detail-value">{{ p.address.postCode }}</span>
+              </div>
+            </div>
+
+            <h4 class="section-title">Emergency Contact</h4>
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ p.emergencyContact.contactName }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Relationship</span>
+                <span class="detail-value">{{ p.emergencyContact.relationship }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Contact Number</span>
+                <span class="detail-value">{{ p.emergencyContact.contactNumber }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Edit mode -->
+      @if (editing()) {
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Edit Patient</h3>
+              <p class="card-sub">{{ p.UHID }}</p>
+            </div>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card-body">
+            <h4 class="section-title">Personal Information</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="pd-name">Full Name <span class="form-required">*</span></label>
+                <input id="pd-name" type="text" formControlName="name" class="form-input" />
+                @if (form.get('name')?.touched && form.get('name')?.invalid) {
+                  @if (form.get('name')?.hasError('name')) {
+                    <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+                  } @else {
+                    <p class="form-error">Name is required</p>
+                  }
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-email">Email <span class="form-required">*</span></label>
+                <input id="pd-email" type="email" formControlName="email" class="form-input" />
+                @if (form.get('email')?.touched) {
+                  @if (form.get('email')?.hasError('required')) {
+                    <p class="form-error">Email is required</p>
+                  }
+                  @if (form.get('email')?.hasError('email')) {
+                    <p class="form-error">Enter a valid email address</p>
+                  }
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-phone">Phone <span class="form-required">*</span></label>
+                <input id="pd-phone" type="tel" formControlName="phone" class="form-input" />
+                @if (form.get('phone')?.touched) {
+                  @if (form.get('phone')?.hasError('required')) {
+                    <p class="form-error">Phone is required</p>
+                  }
+                  @if (form.get('phone')?.hasError('phone')) {
+                    <p class="form-error">
+                      Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+                    </p>
+                  }
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-gender">Gender <span class="form-required">*</span></label>
+                <select id="pd-gender" formControlName="gender" class="form-select">
+                  @for (g of genders; track g) {
+                    <option [value]="g">{{ g }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-dob">Date of Birth <span class="form-required">*</span></label>
+                <input
+                  id="pd-dob"
+                  type="date"
+                  formControlName="dob"
+                  class="form-input"
+                  [attr.max]="todayIso"
+                />
+                @if (form.get('dob')?.touched) {
+                  @if (form.get('dob')?.hasError('required')) {
+                    <p class="form-error">Date of birth is required</p>
+                  }
+                  @if (form.get('dob')?.hasError('futureDate')) {
+                    <p class="form-error">Date of birth cannot be a future date</p>
+                  }
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-status">Status <span class="form-required">*</span></label>
+                <select id="pd-status" formControlName="status" class="form-select">
+                  @for (s of statuses; track s) {
+                    <option [value]="s">{{ s }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <h4 class="section-title">Address</h4>
+            <div class="form-grid" formGroupName="address">
+              <div class="form-group">
+                <label class="form-label" for="pd-house-name">House Name <span class="form-required">*</span></label>
+                <input id="pd-house-name" type="text" formControlName="houseName" class="form-input" />
+                @if (addressCtrl('houseName')?.touched && addressCtrl('houseName')?.invalid) {
+                  <p class="form-error">House name is required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-house-number">House Number <span class="form-required">*</span></label>
+                <input id="pd-house-number" type="text" formControlName="houseNumber" class="form-input" />
+                @if (addressCtrl('houseNumber')?.touched && addressCtrl('houseNumber')?.invalid) {
+                  <p class="form-error">House number is required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-city">City <span class="form-required">*</span></label>
+                <input id="pd-city" type="text" formControlName="city" class="form-input" />
+                @if (addressCtrl('city')?.touched && addressCtrl('city')?.invalid) {
+                  <p class="form-error">City is required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-post-code">Post Code <span class="form-required">*</span></label>
+                <input id="pd-post-code" type="text" formControlName="postCode" class="form-input" />
+                @if (addressCtrl('postCode')?.touched && addressCtrl('postCode')?.invalid) {
+                  <p class="form-error">Post code is required</p>
+                }
+              </div>
+            </div>
+
+            <h4 class="section-title">Emergency Contact</h4>
+            <div class="form-grid" formGroupName="emergencyContact">
+              <div class="form-group">
+                <label class="form-label" for="pd-contact-name">Contact Name <span class="form-required">*</span></label>
+                <input id="pd-contact-name" type="text" formControlName="contactName" class="form-input" />
+                @if (emergencyCtrl('contactName')?.touched && emergencyCtrl('contactName')?.invalid) {
+                  @if (emergencyCtrl('contactName')?.hasError('name')) {
+                    <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+                  } @else {
+                    <p class="form-error">Contact name is required</p>
+                  }
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-relationship">Relationship <span class="form-required">*</span></label>
+                <input id="pd-relationship" type="text" formControlName="relationship" class="form-input" />
+                @if (emergencyCtrl('relationship')?.touched && emergencyCtrl('relationship')?.invalid) {
+                  <p class="form-error">Relationship is required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pd-contact-number">Contact Number <span class="form-required">*</span></label>
+                <input id="pd-contact-number" type="tel" formControlName="contactNumber" class="form-input" />
+                @if (emergencyCtrl('contactNumber')?.touched) {
+                  @if (emergencyCtrl('contactNumber')?.hasError('required')) {
+                    <p class="form-error">Contact number is required</p>
+                  }
+                  @if (emergencyCtrl('contactNumber')?.hasError('phone')) {
+                    <p class="form-error">
+                      Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+                    </p>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="cancelEdit()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="saving() || !hasChanges()">
+                @if (saving()) { <span>Saving…</span> }
+                @else { <span>Save Changes</span> }
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+    }
+  </div>
+</app-dashboard-layout>

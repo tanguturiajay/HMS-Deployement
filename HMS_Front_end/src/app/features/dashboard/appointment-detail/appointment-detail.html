@@ -1,0 +1,151 @@
+<app-dashboard-layout pageTitle="Appointment Details">
+  <div class="page">
+    @if (loading()) {
+      <div class="loading-box">Loading appointment…</div>
+    } @else if (appointment(); as a) {
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">{{ a.appointmentId }}</h3>
+            <p class="card-sub">
+              <span class="status status--{{ a.status.toLowerCase() }}">
+                {{ a.status }}
+              </span>
+            </p>
+          </div>
+          <div class="header-actions">
+            @if (canEdit()) {
+              <button class="btn btn-primary" [disabled]="busy()" (click)="editAppointment()">
+                Edit Appointment
+              </button>
+            }
+            @if (canCancel()) {
+              <button class="btn btn-danger" [disabled]="busy()" (click)="cancel()">
+                @if (busyAction() === 'cancel') {
+                  <span>Cancelling…</span>
+                } @else {
+                  <span>Cancel Appointment</span>
+                }
+              </button>
+            }
+            @if (canGenerateRecord()) {
+              <button class="btn btn-success" [disabled]="busy()" (click)="openCreateRecord()">
+                {{ isDoctor() ? 'Create Medical Record' : 'Generate Medical Record' }}
+              </button>
+            }
+            @if (canMarkUnattended()) {
+              <button
+                class="btn btn-warning"
+                [disabled]="busy() || !endTimePassed()"
+                title="Available once the appointment end time has passed"
+                (click)="markUnattended()">
+                @if (busyAction() === 'unattended') {
+                  <span>Marking…</span>
+                } @else {
+                  <span>Mark Unattended</span>
+                }
+              </button>
+            }
+            @if (canEditRecord()) {
+              <button class="btn btn-primary" [disabled]="busy()" (click)="openEditRecord()">
+                Edit Medical Record
+              </button>
+            }
+            @if (canViewRecord()) {
+              <button class="btn btn-secondary" [disabled]="busy()" (click)="openViewRecord()">
+                View Medical Record
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Date</span>
+              <span class="detail-value">{{ a.appointmentDate | date: 'fullDate' }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Time Slot</span>
+              <span class="detail-value">{{ a.timeSlot }}</span>
+            </div>
+            @if (a.cancellationReason) {
+              <div class="detail">
+                <span class="detail-label">Cancellation Reason</span>
+                <span class="detail-value">{{ a.cancellationReason }}</span>
+              </div>
+            }
+          </div>
+
+          <h4 class="section-title">Patient</h4>
+          @if (a.patient; as p) {
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">UHID</span>
+                <a class="detail-value link"
+                   [routerLink]="['/dashboard/patients', p.UHID]">{{ p.UHID }}</a>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ p.name }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Phone</span>
+                <span class="detail-value">{{ p.phone }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">{{ p.email }}</span>
+              </div>
+            </div>
+          } @else {
+            <p class="muted">Patient record unavailable.</p>
+          }
+
+          <h4 class="section-title">Doctor</h4>
+          @if (a.doctor; as d) {
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">Code</span>
+                <span class="detail-value">{{ d.employeeCode }}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ d.name }}</span>
+              </div>
+              @if (d.specialization) {
+                <div class="detail">
+                  <span class="detail-label">Specialization</span>
+                  <span class="detail-value">{{ d.specialization }}</span>
+                </div>
+              }
+              @if (d.consultationFee != null) {
+                <div class="detail">
+                  <span class="detail-label">Consultation Fee</span>
+                  <span class="detail-value">₹ {{ d.consultationFee }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="muted">Doctor record unavailable.</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (showForm() && appointment(); as a) {
+    <app-medical-record-form-dialog
+      [appointment]="a"
+      [existingRecord]="medicalRecord()"
+      (saved)="onRecordSaved($event)"
+      (closed)="onFormClosed()" />
+  }
+
+  @if (showDetail() && medicalRecord(); as record) {
+    <app-medical-record-detail-dialog
+      [record]="record"
+      (closed)="onDetailClosed()"
+      (deleted)="onRecordDeleted()" />
+  }
+</app-dashboard-layout>

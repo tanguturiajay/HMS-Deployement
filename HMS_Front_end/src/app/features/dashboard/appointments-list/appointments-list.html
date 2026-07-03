@@ -1,0 +1,187 @@
+<app-dashboard-layout pageTitle="Appointments">
+  <div class="page">
+
+    <!-- Doctor view: tabs -->
+    @if (isDoctor()) {
+    <div class="tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="doctorTab() === 'today'"
+        (click)="switchTab('today')">
+        Today
+        <span class="tab-count">{{ doctorTabCount('today') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="doctorTab() === 'upcoming'"
+        (click)="switchTab('upcoming')">
+        Upcoming
+        <span class="tab-count">{{ doctorTabCount('upcoming') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="doctorTab() === 'past'"
+        (click)="switchTab('past')">
+        Past Due
+        <span class="tab-count">{{ doctorTabCount('past') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="doctorTab() === 'completed'"
+        (click)="switchTab('completed')">
+        Completed
+        <span class="tab-count">{{ doctorTabCount('completed') }}</span>
+      </button>
+    </div>
+    }
+
+    <!-- Reception view: filters + book button -->
+    @if (hasReceptionAccess()) {
+    <div class="toolbar">
+      <div class="toolbar-filters">
+
+        <input
+          type="text"
+          class="form-input toolbar-filter"
+          placeholder="Patient UHID"
+          aria-label="Search by patient UHID"
+          [ngModel]="patientSearch()"
+          (ngModelChange)="onPatientSearch($event)" />
+
+        <input
+          type="text"
+          class="form-input toolbar-filter toolbar-search"
+          placeholder="Doctor employee code"
+          aria-label="Search by doctor employee code"
+          [ngModel]="doctorSearch()"
+          (ngModelChange)="onDoctorSearch($event)" />
+
+        <label for="statusFilter" class="sr-only">Filter by status</label>
+        <select
+          id="statusFilter"
+          class="form-select toolbar-filter"
+          [value]="statusFilter()"
+          (change)="onStatusChange($any($event.target).value)">
+
+          <option value="">All Statuses</option>
+
+          @for (status of statuses; track status) {
+          <option [value]="status">
+            {{ status }}
+          </option>
+          }
+
+        </select>
+
+        <input
+          type="date"
+          class="form-input toolbar-filter"
+          aria-label="Date Filter"
+          [value]="dateFilter()"
+          (change)="onDateChange($any($event.target).value)" />
+
+        @if (hasActiveFilters()) {
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="clearAllFilters()">
+          Clear filters
+        </button>
+        }
+
+      </div>
+
+      <a
+        routerLink="/dashboard/appointments/book"
+        class="btn btn-primary">
+        + Book Appointment
+      </a>
+    </div>
+    }
+
+    @if (loading()) {
+    <div class="loading-box">
+      Loading appointments…
+    </div>
+    } @else if (appointments().length === 0) {
+    <div class="empty-box">
+      <p>No appointments to show.</p>
+    </div>
+    } @else {
+
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Date</th>
+            <th>Slot</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (a of appointments(); track trackById($index, a)) {
+          <tr
+            class="clickable"
+            tabindex="0"
+            (click)="open(a)"
+            (keydown.enter)="open(a)"
+            (keydown.space)="open(a)">
+
+            <td>{{ a.appointmentId }}</td>
+            <td>{{ a.patient?.name || a.patientUHID }}</td>
+            <td>{{ a.doctor?.name || a.doctorEmployeeId }}</td>
+            <td>{{ a.appointmentDate | date:'mediumDate' }}</td>
+            <td>{{ a.timeSlot }}</td>
+
+            <td>
+              <span class="status status--{{ a.status.toLowerCase() }}">
+                {{ a.status }}
+              </span>
+            </td>
+
+            <td class="row-actions">
+              @if (hasReceptionAccess() && a.status === 'BOOKED' && !startTimePassed(a)) {
+              <button
+                type="button"
+                class="btn btn-sm btn-danger-outline"
+                [disabled]="busyId() !== null"
+                (click)="cancel(a, $event)">
+                @if (busyId() === a.appointmentId && busyAction() === 'cancel') {
+                <span>Cancelling…</span>
+                } @else {
+                <span>Cancel</span>
+                }
+              </button>
+              }
+            </td>
+
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+    }
+
+    }
+
+  </div>
+</app-dashboard-layout>

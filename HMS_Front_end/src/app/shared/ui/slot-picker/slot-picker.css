@@ -1,0 +1,86 @@
+.sp-empty {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  color: #475569;
+  font-size: 0.875rem;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.sp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 0.5rem;
+}
+
+.sp-slot {
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.sp-slot:hover:not(:disabled) {
+  border-color: #0f766e;
+  color: #0f766e;
+  background-color: #f0fdfa;
+}
+
+.sp-slot.selected {
+  background-color: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+/* Booked slots: red, struck through, unselectable */
+.sp-slot.booked {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.sp-slot:disabled {
+  cursor: not-allowed;
+}
+
+.sp-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.875rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.sp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sp-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sp-dot-available {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.sp-dot-booked {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}

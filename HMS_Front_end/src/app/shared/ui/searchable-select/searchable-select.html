@@ -1,0 +1,69 @@
+<div class="ss-wrapper" [class.ss-disabled]="disabled">
+  <button
+    type="button"
+    class="ss-trigger"
+    [class.ss-open]="isOpen()"
+    [class.ss-has-clear]="!!selectedOption()"
+    [disabled]="disabled"
+    (click)="toggle()"
+    (keydown)="onKeydown($event)"
+  >
+    @if (selectedOption()) {
+      <span class="ss-value">{{ displayLabel() }}</span>
+    } @else {
+      <span class="ss-placeholder">{{ placeholder }}</span>
+    }
+    <span class="ss-caret" [class.up]="isOpen()" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </span>
+  </button>
+
+  @if (selectedOption() && !disabled) {
+    <button
+      type="button"
+      class="ss-clear"
+      (click)="clear($event)"
+      aria-label="Clear"
+    >✕</button>
+  }
+
+  @if (isOpen()) {
+    <div class="ss-panel">
+      <div class="ss-search">
+        <input
+          #searchInput
+          type="text"
+          class="ss-search-input"
+          aria-label="ss-search-input"
+          [placeholder]="searchPlaceholder"
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+          (keydown)="onKeydown($event)"
+          autofocus
+        />
+      </div>
+
+      <ul class="ss-options" aria-label="Available options">
+        @for (option of filteredOptions(); track trackByValue($index, option); let i = $index) {
+          <li
+            class="ss-option"
+            [class.active]="i === activeIndex()"
+            (click)="select(option)"
+            (keydown)="onKeydown($event)"
+            (mouseenter)="activeIndex.set(i)"
+          >
+            <span class="ss-option-label">{{ optionLabel(option) }}</span>
+            @if (sublabelKey && optionSublabel(option)) {
+              <span class="ss-option-sublabel">{{ optionSublabel(option) }}</span>
+            }
+          </li>
+        } @empty {
+          <li class="ss-empty">{{ emptyText }}</li>
+        }
+      </ul>
+    </div>
+  }
+</div>

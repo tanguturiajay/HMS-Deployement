@@ -1,0 +1,116 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* Sidebar host; docked at a fixed width on desktop */
+.sidebar-host {
+  display: block;
+}
+
+.dashboard-main {
+  flex: 1;
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.2s ease;
+}
+
+/* Desktop: when collapsed, drop the offset so content uses full width */
+.dashboard-layout.sidebar-collapsed .dashboard-main {
+  margin-left: 0;
+}
+
+.dashboard-topbar {
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #ffffff;
+  padding: 0 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+
+.topbar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.topbar-toggle:hover {
+  background-color: #f0fdfa;
+  color: #0f766e;
+}
+
+.topbar-toggle svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.page-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dashboard-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+/* Backdrop behind the mobile sidebar overlay */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  z-index: 45;
+  animation: backdropIn 0.15s ease;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Desktop collapse: hide the docked sidebar when toggled off */
+@media (min-width: 769px) {
+  .dashboard-layout.sidebar-collapsed .sidebar-host {
+    /* The inner .sidebar is position:fixed and slides out via its own rule */
+    width: 0;
+  }
+}
+
+/* Mobile: sidebar becomes a slide-in overlay */
+@media (max-width: 768px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
+
+  .dashboard-topbar {
+    padding: 0 1rem;
+  }
+
+  .dashboard-content {
+    padding: 1.25rem;
+  }
+
+  .page-title {
+    font-size: 1.125rem;
+  }
+}

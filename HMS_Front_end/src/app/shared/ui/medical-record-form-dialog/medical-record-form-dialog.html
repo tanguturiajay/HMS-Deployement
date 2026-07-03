@@ -1,0 +1,245 @@
+<div class="mr-modal-backdrop" (click)="requestClose()" (keydown.escape)="requestClose()">
+  <div class="mr-modal-box" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()">
+    <div class="mr-modal-header">
+      <h3 class="mr-modal-title">
+        {{ existingRecord ? 'Edit Medical Record' : 'Generate Medical Record' }}
+      </h3>
+      <button type="button" class="mr-close" aria-label="Close" (click)="requestClose()">×</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="mr-modal-body">
+      <!-- Auto-filled, read-only context -->
+      <div class="mr-grid">
+        <div class="mr-field">
+          <span class="mr-label">Patient UHID</span>
+          <span class="mr-readonly">{{ patientUHID }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Patient Name</span>
+          <span class="mr-readonly">{{ patientName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor ID</span>
+          <span class="mr-readonly">{{ doctorEmployeeId }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor Name</span>
+          <span class="mr-readonly">{{ doctorName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Appointment ID</span>
+          <span class="mr-readonly">{{ appointmentId }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Status</span>
+          @if (isDoctor()) {
+            <select class="form-select" formControlName="status">
+              <option value="DRAFT">DRAFT</option>
+              <option value="FINALIZED">FINALIZED</option>
+            </select>
+          } @else {
+            <span class="mr-readonly">DRAFT</span>
+          }
+        </div>
+      </div>
+
+      <!-- Editable clinical fields -->
+      <div class="form-group">
+        <label class="form-label" for="mr-complaint">Chief Complaint <span class="form-required">*</span></label>
+        <textarea id="mr-complaint" rows="2" class="form-input mr-textarea" formControlName="chiefComplaint"
+          placeholder="What the patient reports (their own words)"></textarea>
+        @if (form.get('chiefComplaint')?.touched && form.get('chiefComplaint')?.invalid) {
+          <p class="form-error">Chief complaint is required</p>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-symptoms">Symptoms <span class="form-required">*</span></label>
+        <textarea id="mr-symptoms" rows="3" class="form-input mr-textarea" formControlName="symptoms"
+          placeholder="Doctor's findings from examination / questioning"></textarea>
+        @if (form.get('symptoms')?.touched && form.get('symptoms')?.invalid) {
+          <p class="form-error">Symptoms are required</p>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-diagnosis">Diagnosis <span class="form-required">*</span></label>
+        <textarea id="mr-diagnosis" rows="3" class="form-input mr-textarea" formControlName="diagnosis"></textarea>
+        @if (form.get('diagnosis')?.touched && form.get('diagnosis')?.invalid) {
+          <p class="form-error">Diagnosis is required</p>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-advice">Advice <span class="form-required">*</span></label>
+        <textarea id="mr-advice" rows="3" class="form-input mr-textarea" formControlName="advice"
+          placeholder="Guidance shown to the patient (e.g. take rest, nebulize at home)"></textarea>
+        @if (form.get('advice')?.touched && form.get('advice')?.invalid) {
+          <p class="form-error">Advice is required</p>
+        }
+      </div>
+
+      <!-- Prescription items (optional) -->
+      <div class="mr-section-head">
+        <h4 class="section-title">Prescription</h4>
+      </div>
+
+      <div formArrayName="prescriptionItems">
+        @for (item of prescriptionItems.controls; track item; let i = $index) {
+          <div class="mr-rx-card" [formGroupName]="i">
+            <div class="mr-rx-grid">
+              <div class="form-group mr-rx-full">
+                <label class="form-label" for="rx-name-{{ i }}">Name <span class="form-required">*</span></label>
+                <input id="rx-name-{{ i }}" type="text" class="form-input" formControlName="name" />
+                @if (itemInvalid(i, 'name')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rx-dosage-{{ i }}">Dosage <span class="form-required">*</span></label>
+                <input id="rx-dosage-{{ i }}" type="text" class="form-input" formControlName="dosage"
+                  placeholder="e.g. 1 tablet, 5 ml" />
+                @if (itemInvalid(i, 'dosage')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rx-frequency-{{ i }}">Frequency <span class="form-required">*</span></label>
+                <input id="rx-frequency-{{ i }}" type="text" class="form-input" formControlName="frequency"
+                  placeholder="e.g. 3 times a day" />
+                @if (itemInvalid(i, 'frequency')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rx-duration-{{ i }}">Duration <span class="form-required">*</span></label>
+                <input id="rx-duration-{{ i }}" type="text" class="form-input" formControlName="duration"
+                  placeholder="e.g. 5 days" />
+                @if (itemInvalid(i, 'duration')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+
+              <!-- Cascading administration route: category filters the method list -->
+              <div class="form-group">
+                <label class="form-label" for="rx-cat-{{ i }}">Administration Category <span class="form-required">*</span></label>
+                <select id="rx-cat-{{ i }}" class="form-select" formControlName="administrationCategory"
+                  (change)="onCategoryChange(i)">
+                  <option value="">Select category</option>
+                  @for (c of categories; track c) {
+                    <option [value]="c">{{ categoryLabels[c] }}</option>
+                  }
+                </select>
+                @if (itemInvalid(i, 'administrationCategory')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rx-method-{{ i }}">Administration Method <span class="form-required">*</span></label>
+                <select id="rx-method-{{ i }}" class="form-select" formControlName="administrationMethod"
+                  [disabled]="!methodsFor(i).length">
+                  <option value="">Select method</option>
+                  @for (m of methodsFor(i); track m) {
+                    <option [value]="m">{{ methodLabels[m] }}</option>
+                  }
+                </select>
+                @if (itemInvalid(i, 'administrationMethod')) {
+                  <p class="form-error">Required</p>
+                }
+              </div>
+
+              <!-- Food timing (optional): relation + offset entered in minutes -->
+              <div class="form-group" formGroupName="foodTiming">
+                <label class="form-label" for="rx-food-{{ i }}">Food timing</label>
+                <div class="mr-food">
+                  <select id="rx-food-{{ i }}" class="form-select" formControlName="relation">
+                    <option value="">—</option>
+                    @for (fr of foodRelations; track fr) {
+                      <option [value]="fr">{{ foodRelationShortLabels[fr] }}</option>
+                    }
+                  </select>
+                  <input type="number" min="0" class="form-input mr-food-min" formControlName="offsetMinutes"
+                    placeholder="min" aria-label="Minutes before/after food" />
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-danger-outline btn-sm mr-rx-remove" (click)="removeItem(i)">
+              Remove
+            </button>
+          </div>
+        }
+        @if (!prescriptionItems.length) {
+          <p class="muted">No medication added. Use "Add medication" if a prescription is needed.</p>
+        }
+      </div>
+
+      <button type="button" class="btn btn-secondary btn-sm mr-add-row" (click)="addItem()">
+        + Add medication
+      </button>
+
+      <!-- Vitals / observations (optional) -->
+      <div class="mr-section-head">
+        <h4 class="section-title">Vitals / Observations</h4>
+      </div>
+
+      <div formArrayName="medicalObservations">
+        @for (o of observations.controls; track o; let i = $index) {
+          <div class="mr-obs-row" [formGroupName]="i">
+            <div class="form-group">
+              <label class="form-label" for="obs-name-{{ i }}">Metric <span class="form-required">*</span></label>
+              <input id="obs-name-{{ i }}" type="text" class="form-input" formControlName="metricName"
+                placeholder="e.g. BP, Heart rate" />
+              @if (obsInvalid(i, 'metricName')) {
+                <p class="form-error">Required</p>
+              }
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="obs-value-{{ i }}">Value <span class="form-required">*</span></label>
+              <input id="obs-value-{{ i }}" type="text" class="form-input" formControlName="metricValue"
+                placeholder="e.g. 120/80, 72 bpm" />
+              @if (obsInvalid(i, 'metricValue')) {
+                <p class="form-error">Required</p>
+              }
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="obs-time-{{ i }}">Recorded time <span class="form-required">*</span></label>
+              <input id="obs-time-{{ i }}" type="datetime-local" class="form-input" formControlName="recordedTime" />
+              @if (obsInvalid(i, 'recordedTime')) {
+                <p class="form-error">Required</p>
+              }
+            </div>
+            <button type="button" class="btn btn-danger-outline btn-sm mr-rx-remove" (click)="removeObs(i)">
+              Remove
+            </button>
+          </div>
+        }
+        @if (!observations.length) {
+          <p class="muted">No vitals recorded. Use "Add observation" to record a test.</p>
+        }
+      </div>
+
+      <button type="button" class="btn btn-secondary btn-sm mr-add-row" (click)="addObs()">
+        + Add observation
+      </button>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-notes">Notes (internal)</label>
+        <textarea
+          id="mr-notes"
+          rows="2"
+          class="form-input mr-textarea"
+          formControlName="notes"></textarea>
+      </div>
+
+      <div class="mr-modal-actions">
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="requestClose()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving() || (!!existingRecord && !hasChanges())">
+          @if (saving()) { <span>Saving…</span> } @else { <span>{{ primaryLabel() }}</span> }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

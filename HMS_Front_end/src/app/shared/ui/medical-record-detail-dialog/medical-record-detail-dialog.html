@@ -1,0 +1,110 @@
+<div class="mr-modal-backdrop" (click)="close()" (keydown.escape)="close()">
+  <div class="mr-modal-box" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()">
+    <div class="mr-modal-header">
+      <div>
+        <h3 class="mr-modal-title">{{ record.medicalRecordId }}</h3>
+        <span class="status status--{{ record.status.toLowerCase() }}">{{ record.status }}</span>
+      </div>
+      <button type="button" class="mr-close" aria-label="Close" (click)="close()">×</button>
+    </div>
+
+    <div class="mr-modal-body">
+      <div class="mr-grid">
+        <div class="mr-field">
+          <span class="mr-label">Patient UHID</span>
+          <span class="mr-value">{{ record.patientUHID }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Patient Name</span>
+          <span class="mr-value">{{ record.patientName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor ID</span>
+          <span class="mr-value">{{ record.doctorEmployeeId }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor Name</span>
+          <span class="mr-value">{{ record.doctorName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Appointment ID</span>
+          <span class="mr-value">{{ record.appointmentId }}</span>
+        </div>
+        @if (record.created_at) {
+          <div class="mr-field">
+            <span class="mr-label">Date</span>
+            <span class="mr-value">{{ record.created_at | date: 'medium' }}</span>
+          </div>
+        }
+      </div>
+
+      <h4 class="section-title">Chief Complaint</h4>
+      <p class="mr-text">{{ record.chiefComplaint }}</p>
+
+      <h4 class="section-title">Symptoms</h4>
+      <p class="mr-text">{{ record.symptoms }}</p>
+
+      <h4 class="section-title">Diagnosis</h4>
+      <p class="mr-text">{{ record.diagnosis }}</p>
+
+      <h4 class="section-title">Advice</h4>
+      <p class="mr-text">{{ record.advice }}</p>
+
+      @if (record.prescriptionItems?.length) {
+        <h4 class="section-title">Prescription</h4>
+        <table class="data-table mr-rx-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th>
+              <th>Food timing</th><th>Administration</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of record.prescriptionItems; track $index) {
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.dosage }}</td>
+                <td>{{ item.frequency }}</td>
+                <td>{{ item.duration }}</td>
+                <td>{{ foodTimingText(item) || '—' }}</td>
+                <td>{{ methodLabels[item.administrationMethod] }} · {{ categoryLabels[item.administrationCategory] }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (record.medicalObservations?.length) {
+        <h4 class="section-title">Vitals / Observations</h4>
+        <table class="data-table mr-rx-table">
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Recorded time</th></tr>
+          </thead>
+          <tbody>
+            @for (obs of record.medicalObservations; track $index) {
+              <tr>
+                <td>{{ obs.metricName }}</td>
+                <td>{{ obs.metricValue }}</td>
+                <td>{{ obs.recordedTime | date: 'medium' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (record.notes) {
+        <h4 class="section-title">Notes</h4>
+        <p class="mr-text">{{ record.notes }}</p>
+      }
+    </div>
+
+    <div class="mr-modal-actions">
+      @if (canDelete()) {
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="remove()">
+          @if (deleting()) { <span>Deleting…</span> } @else { <span>Delete</span> }
+        </button>
+      }
+      <button type="button" class="btn btn-secondary" (click)="close()">Close</button>
+    </div>
+  </div>
+</div>

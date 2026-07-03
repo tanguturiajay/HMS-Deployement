@@ -1,0 +1,46 @@
+<div class="dashboard-layout" [class.sidebar-collapsed]="!sidebarOpen()">
+  <!-- Backdrop: only on mobile when the sidebar overlay is open -->
+  @if (isMobile() && sidebarOpen()) {
+    <div
+  class="sidebar-backdrop"
+  (click)="closeSidebar()"
+  (keydown.enter)="closeSidebar()"
+  (keydown.space)="closeSidebar()">
+</div>
+  }
+
+  <app-sidebar
+    class="sidebar-host"
+    [class.open]="sidebarOpen()"
+    (navigate)="onSidebarNavigate()"
+    (sidebarToggled)="toggleSidebar()"
+  ></app-sidebar>
+
+  <div class="dashboard-main">
+    <header class="dashboard-topbar">
+      @if (!sidebarOpen()) {
+        <button
+          type="button"
+          class="topbar-toggle"
+          (click)="toggleSidebar()"
+          aria-label="Show sidebar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      }
+      @if (pageTitle) {
+        <h1 class="page-title">{{ pageTitle }}</h1>
+      }
+    </header>
+
+    <div class="dashboard-content">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

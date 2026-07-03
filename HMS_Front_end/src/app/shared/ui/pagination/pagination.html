@@ -1,0 +1,44 @@
+<div class="pager">
+  <nav class="pager-controls" role="navigation" aria-label="Pagination">
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      (click)="prev()"
+      [disabled]="disabled || page <= 1">
+      ← Previous
+    </button>
+
+    <ul class="page-list">
+      @for (item of pages; track $index) {
+        @if (item === 'ellipsis') {
+          <li class="page-ellipsis" aria-hidden="true">…</li>
+        } @else {
+          <li>
+            <button
+              type="button"
+              class="page-btn"
+              [class.active]="item === page"
+              [attr.aria-current]="item === page ? 'page' : null"
+              [attr.aria-label]="'Page ' + item"
+              [disabled]="disabled"
+              (click)="go(item)">
+              {{ item }}
+            </button>
+          </li>
+        }
+      }
+    </ul>
+
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      (click)="next()"
+      [disabled]="disabled || page >= totalPages">
+      Next →
+    </button>
+  </nav>
+
+  @if (total !== null) {
+    <span class="page-info">Page {{ page }} of {{ totalPages }} · {{ total }} total</span>
+  }
+</div>

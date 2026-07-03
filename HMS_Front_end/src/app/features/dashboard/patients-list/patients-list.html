@@ -1,0 +1,180 @@
+<app-dashboard-layout pageTitle="Patients">
+  <div class="page">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-filters">
+        <input type="text" class="form-input toolbar-search" placeholder="Search by name, UHID, phone, or email..."
+          (input)="onSearchInput($any($event.target).value)" />
+        <div class="filter-group">
+          <label class="filter-label" for="patients-status-filter">Status</label>
+          <select id="patients-status-filter" class="form-select toolbar-filter" (change)="onStatusChange($any($event.target).value)"
+            [disabled]="searching()">
+            <option value="">All Statuses</option>
+            @for (s of statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label" for="patients-gender-filter">Gender</label>
+          <select id="patients-gender-filter" class="form-select toolbar-filter" (change)="onGenderChange($any($event.target).value)"
+            [disabled]="searching()">
+            <option value="">All Genders</option>
+            @for (g of genders; track g) {
+            <option [value]="g">{{ g }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <a routerLink="/dashboard/patients/create" class="btn btn-primary">
+        + Add Patient
+      </a>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-box">Loading patients…</div>
+    } @else if (patients().length === 0) {
+    <div class="empty-box">
+      <p>No patients match your filters.</p>
+    </div>
+    } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>UHID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Gender</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of patients(); track trackByUHID($index, p)) {
+          <tr (click)="open(p)" (keydown.enter)="open(p)" tabindex="0" class="clickable">
+            <td>{{ p.UHID }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.phone }}</td>
+            <td>{{ p.email }}</td>
+            <td>{{ p.gender }}</td>
+            <td>
+              <span class="status status--{{ p.status.toLowerCase() }}">
+                {{ p.status }}
+              </span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!searching() && totalPages() > 1) {
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+    }
+    }
+  </div>
+
+  <!-- Detail modal -->
+  @if (selected(); as p) {
+    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">{{ p.name }}</h3>
+            <p class="modal-sub">
+              {{ p.UHID }} ·
+              <span class="status status--{{ p.status.toLowerCase() }}">{{ p.status }}</span>
+            </p>
+          </div>
+          <div class="modal-header-actions">
+            <button type="button" class="btn btn-secondary btn-sm" [disabled]="deleting()" (click)="viewMedicalRecords(p)">
+              View Medical Records
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="editPatient(p)">
+              Edit
+            </button>
+            <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <h4 class="detail-section">Personal Information</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ p.email }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ p.phone }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Gender</span>
+              <span class="detail-value">{{ p.gender }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Date of Birth</span>
+              <span class="detail-value">{{ p.dob | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <h4 class="detail-section">Address</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">House Name</span>
+              <span class="detail-value">{{ p.address.houseName }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">House Number</span>
+              <span class="detail-value">{{ p.address.houseNumber }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">City</span>
+              <span class="detail-value">{{ p.address.city }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Post Code</span>
+              <span class="detail-value">{{ p.address.postCode }}</span>
+            </div>
+          </div>
+
+          <h4 class="detail-section">Emergency Contact</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Name</span>
+              <span class="detail-value">{{ p.emergencyContact.contactName }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Relationship</span>
+              <span class="detail-value">{{ p.emergencyContact.relationship }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Contact Number</span>
+              <span class="detail-value">{{ p.emergencyContact.contactNumber }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
+            Close
+          </button>
+          @if (isPrivileged()) {
+            <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="deletePatient(p)">
+              @if (deleting()) {
+                <span>Deleting…</span>
+              } @else {
+                <span>Delete</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-dashboard-layout>

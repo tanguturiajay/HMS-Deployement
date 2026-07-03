@@ -1,0 +1,165 @@
+<app-dashboard-layout pageTitle="Profile">
+  <div class="profile-page">
+    @if (loading() && !profile()) {
+      <div class="loading-box">Loading profile…</div>
+    } @else if (profile()) {
+      <!-- Profile card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">My Profile</h3>
+        </div>
+        <div class="card-body profile-grid">
+          <div class="profile-field">
+            <span class="profile-label">Employee Code</span>
+            <span class="profile-value">{{ profile()?.employeeCode }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Name</span>
+            <span class="profile-value">{{ profile()?.name }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Email</span>
+            <span class="profile-value">{{ profile()?.email }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Department</span>
+            <span class="profile-value">{{ profile()?.department }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Designation</span>
+            <span class="profile-value">{{ profile()?.designation }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Phone</span>
+            <span class="profile-value">{{ profile()?.phone || '—' }}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Joining Date</span>
+            <span class="profile-value">
+              {{ profile()?.joiningDate ? (profile()?.joiningDate | date: 'mediumDate') : '—' }}
+            </span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Qualification</span>
+            <span class="profile-value">
+              {{ (profile()?.qualification && profile()!.qualification!.length) ? profile()!.qualification!.join(', ') : '—' }}
+            </span>
+          </div>
+          @if (profile()?.specialization) {
+            <div class="profile-field">
+              <span class="profile-label">Specialization</span>
+              <span class="profile-value">{{ profile()?.specialization }}</span>
+            </div>
+          }
+          @if (profile()?.medicalRegistrationNumber) {
+            <div class="profile-field">
+              <span class="profile-label">Med. Registration No</span>
+              <span class="profile-value">
+                {{ profile()?.medicalRegistrationNumber }}
+              </span>
+            </div>
+          }
+          @if (profile()?.consultationFee != null) {
+            <div class="profile-field">
+              <span class="profile-label">Consultation Fee</span>
+              <span class="profile-value">{{ profile()?.consultationFee }}</span>
+            </div>
+          }
+        </div>
+        @if (profile()?.availabilitySlots?.length) {
+          <div class="card-body availability-block">
+            <span class="profile-label">Availability</span>
+            <ul class="slot-list">
+              @for (s of profile()!.availabilitySlots | sortAvailabilitySlots; track $index) {
+                <li>
+                  <strong>{{ s.day }}:</strong> {{ s.startTime }} – {{ s.endTime }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <!-- Self-editable fields -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            @if (isPrivileged()) { Update Profile } @else { Request Profile Update }
+          </h3>
+          <p class="card-sub">
+            @if (isPrivileged()) {
+              Update your phone number and qualification.
+            } @else {
+              Changes to phone and qualification require admin approval before
+              being applied.
+            }
+          </p>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="profile-phone">Phone</label>
+              <input
+                type="tel"
+                id="profile-phone"
+                formControlName="phone"
+                class="form-input"
+                placeholder="+91 1234567890"
+              />
+              @if (profileForm.get('phone')?.touched) {
+                @if (profileForm.get('phone')?.hasError('required')) {
+                  <p class="form-error">Phone is required</p>
+                }
+                @if (profileForm.get('phone')?.hasError('phone')) {
+                  <p class="form-error">
+                    Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+                  </p>
+                }
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profile-qualification">Qualification</label>
+              <input
+                type="text"
+                id="profile-qualification"
+                formControlName="qualification"
+                class="form-input"
+                placeholder="MBBS, MD (comma separated)"
+              />
+              @if (profileForm.get('qualification')?.touched) {
+                @if (profileForm.get('qualification')?.hasError('required')) {
+                  <p class="form-error">At least one qualification is required</p>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="goChangePassword()"
+            >
+              Change Password
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="saving() || !hasChanges()"
+            >
+              @if (saving()) {
+                <span>Saving…</span>
+              } @else if (isPrivileged()) {
+                <span>Save Changes</span>
+              } @else {
+                <span>Submit for Approval</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</app-dashboard-layout>
