@@ -67,7 +67,7 @@ const seedOwner = async () => {
     if (!ownerPassword) {
       throw new Error("OWNER_PASS env variable is not set");
     }
-    const passwordHash = await bcrypt.hash(ownerPassword, 10);
+    const passwordHash = await bcrypt.hash(ownerPassword, 12);
     await User.create({ ...OWNER_USER, passwordHash });
     console.log("Created owner user");
   }
