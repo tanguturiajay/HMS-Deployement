@@ -8,6 +8,8 @@ export interface User {
   roles: UserRole[];
   mustChangePassword?: boolean;
   lastLoginAt?: string | null;
+  // Effective action permissions delivered with the user at login and /auth/me
+  permissions?: string[];
   profile: EmployeeProfile;
 }
 

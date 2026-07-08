@@ -6,7 +6,7 @@ import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { PatientService } from '../../../core/services/patient.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
@@ -35,7 +35,7 @@ import {
 })
 export class PatientsListComponent implements OnInit {
   private readonly patientService = inject(PatientService);
-  private readonly authService = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
@@ -45,11 +45,10 @@ export class PatientsListComponent implements OnInit {
   selected = signal<Patient | null>(null);
   deleting = signal(false);
 
-  // Only admin/owner may delete a patient
-  isPrivileged = computed(() => {
-    const d = this.authService.getDesignation();
-    return d === 'OWNER' || d === 'ADMIN';
-  });
+  // Action buttons follow the granted permissions
+  canCreate = computed(() => this.permissionService.can('CREATE_PATIENT'));
+  canEdit = computed(() => this.permissionService.can('UPDATE_PATIENT'));
+  canDelete = computed(() => this.permissionService.can('DELETE_PATIENT'));
 
   patients = signal<Patient[]>([]);
   loading = signal(true);

@@ -15,6 +15,7 @@ const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const nodeRoutes = require("./routes/nodeRoutes");
+const permissionRoutes = require("./routes/permissionRoutes");
 const patientAuthRoutes = require("./routes/patientAuthRoutes");
 const patientSelfRoutes = require("./routes/patientSelfRoutes");
 const mongoose = require("mongoose");
@@ -68,6 +69,7 @@ app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/nodes", nodeRoutes);
+app.use("/api/permissions", permissionRoutes);
 
 // Patient-facing app (mobile) routes
 app.use("/api/patient/auth", patientAuthRoutes);
@@ -77,6 +79,14 @@ app.use("/api/patient", patientSelfRoutes);
 app.get("/", (req, res) =>
   sendSuccess(res, STATUS.OK, MESSAGES.COMMON.API_RUNNING)
 );
+
+// Health endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Unknown routes -> JSON 404 envelope
 app.use(notFound);

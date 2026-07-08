@@ -1,7 +1,7 @@
 import { Routes, CanActivateFn, Router } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-import { designationGuard } from './core/guards/role.guard';
 import { nodeAccessGuard } from './core/guards/node-access.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
@@ -74,10 +74,11 @@ export const routes: Routes = [
           ),
       },
 
-      // Employees: OWNER + ADMIN (superusers always pass)
+      // Employees: access driven by the Employees sidebar node with mutations behind permissions
       {
         path: 'employees',
-        canActivate: [designationGuard([])], // empty list → only superusers
+        canActivate: [nodeAccessGuard],
+        data: { nodePath: '/dashboard/employees' },
         loadComponent: () =>
           import('./features/dashboard/employees/employees').then(
             (m) => m.EmployeesListComponent,
@@ -85,9 +86,9 @@ export const routes: Routes = [
       },
       {
         path: 'employees/create',
-        canActivate: [designationGuard([])],
+        canActivate: [nodeAccessGuard, permissionGuard(['CREATE_EMPLOYEE'])],
         canDeactivate: [unsavedChangesGuard],
-        data: { mode: 'staff' },
+        data: { mode: 'staff', nodePath: '/dashboard/employees' },
         loadComponent: () =>
           import(
             './features/dashboard/employees-create/employees-create'
@@ -95,29 +96,31 @@ export const routes: Routes = [
       },
       {
         path: 'employees/:code/edit',
-        canActivate: [designationGuard([])],
+        canActivate: [nodeAccessGuard, permissionGuard(['UPDATE_EMPLOYEE'])],
         canDeactivate: [unsavedChangesGuard],
-        data: { mode: 'edit' },
+        data: { mode: 'edit', nodePath: '/dashboard/employees' },
         loadComponent: () =>
           import(
             './features/dashboard/employees-create/employees-create'
           ).then((m) => m.CreateEmployeeComponent),
       },
 
-      // Approvals: OWNER + ADMIN
+      // Approvals: access driven by the Approvals sidebar node
       {
         path: 'approvals',
-        canActivate: [designationGuard([])],
+        canActivate: [nodeAccessGuard],
+        data: { nodePath: '/dashboard/approvals' },
         loadComponent: () =>
           import('./features/dashboard/approvals/approvals').then(
             (m) => m.ApprovalsComponent,
           ),
       },
 
-      // Admins management: OWNER only (uses the dedicated ownerOnlyGuard below)
+      // Admins management: access driven by the Admins sidebar node with mutations behind permissions
       {
         path: 'admins',
-        canActivate: [ownerOnlyGuard()],
+        canActivate: [nodeAccessGuard],
+        data: { nodePath: '/dashboard/admins' },
         loadComponent: () =>
           import('./features/dashboard/admins/admins').then(
             (m) => m.AdminsComponent,
@@ -125,9 +128,9 @@ export const routes: Routes = [
       },
       {
         path: 'admins/create',
-        canActivate: [ownerOnlyGuard()],
+        canActivate: [nodeAccessGuard, permissionGuard(['CREATE_ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
-        data: { mode: 'admin' },
+        data: { mode: 'admin', nodePath: '/dashboard/admins' },
         loadComponent: () =>
           import(
             './features/dashboard/employees-create/employees-create'
@@ -135,9 +138,9 @@ export const routes: Routes = [
       },
       {
         path: 'admins/:code/edit',
-        canActivate: [ownerOnlyGuard()],
+        canActivate: [nodeAccessGuard, permissionGuard(['UPDATE_ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
-        data: { mode: 'admin-edit' },
+        data: { mode: 'admin-edit', nodePath: '/dashboard/admins' },
         loadComponent: () =>
           import(
             './features/dashboard/employees-create/employees-create'
@@ -154,6 +157,16 @@ export const routes: Routes = [
           ),
       },
 
+      // Permissions (per-designation action permission management): OWNER only
+      {
+        path: 'permissions',
+        canActivate: [ownerOnlyGuard()],
+        loadComponent: () =>
+          import('./features/dashboard/permissions/permissions').then(
+            (m) => m.PermissionsComponent,
+          ),
+      },
+
       // Patients: access driven by the Patients sidebar node
       {
         path: 'patients',
@@ -166,7 +179,7 @@ export const routes: Routes = [
       },
       {
         path: 'patients/create',
-        canActivate: [nodeAccessGuard],
+        canActivate: [nodeAccessGuard, permissionGuard(['CREATE_PATIENT'])],
         data: { nodePath: '/dashboard/patients' },
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
@@ -185,7 +198,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Appointments access is driven by the Appointments sidebar node where doctors are auto scoped to their own and booking stays reception only
+      // Appointments access is driven by the Appointments sidebar node with mutations behind permissions
       {
         path: 'appointments',
         canActivate: [nodeAccessGuard],
@@ -197,7 +210,7 @@ export const routes: Routes = [
       },
       {
         path: 'appointments/book',
-        canActivate: [nodeAccessGuard, designationGuard(['RECEPTIONIST'])],
+        canActivate: [nodeAccessGuard, permissionGuard(['CREATE_APPOINTMENT'])],
         data: { nodePath: '/dashboard/appointments' },
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
@@ -207,7 +220,7 @@ export const routes: Routes = [
       },
       {
         path: 'appointments/:appointmentId/edit',
-        canActivate: [nodeAccessGuard],
+        canActivate: [nodeAccessGuard, permissionGuard(['UPDATE_APPOINTMENT'])],
         canDeactivate: [unsavedChangesGuard],
         data: { mode: 'edit', nodePath: '/dashboard/appointments' },
         loadComponent: () =>

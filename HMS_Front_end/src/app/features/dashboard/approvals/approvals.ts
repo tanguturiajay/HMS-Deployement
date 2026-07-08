@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AdminService } from '../../../core/services/admin.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -26,11 +27,26 @@ type Tab = 'registrations' | 'profileChanges';
 })
 export class ApprovalsComponent implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
 
   tab = signal<Tab>('registrations');
+
+  // Action buttons follow the granted permissions
+  canApproveEmployee = computed(() =>
+    this.permissionService.can('APPROVE_EMPLOYEE'),
+  );
+  canRejectEmployee = computed(() =>
+    this.permissionService.can('REJECT_EMPLOYEE'),
+  );
+  canApproveChange = computed(() =>
+    this.permissionService.can('APPROVE_PROFILE_CHANGE'),
+  );
+  canRejectChange = computed(() =>
+    this.permissionService.can('REJECT_PROFILE_CHANGE'),
+  );
 
   registrations = signal<EmployeeListItem[]>([]);
   changes = signal<ProfileChangeRequest[]>([]);

@@ -7,6 +7,7 @@ import { MedicalRecordDetailDialogComponent } from '../../../shared/ui/medical-r
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -34,6 +35,7 @@ export class AppointmentDetailComponent implements OnInit {
   private readonly appointmentService = inject(AppointmentService);
   private readonly medicalRecordService = inject(MedicalRecordService);
   private readonly authService = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
@@ -53,39 +55,44 @@ export class AppointmentDetailComponent implements OnInit {
   busy = computed(() => this.busyAction() !== null);
 
   isDoctor = computed(() => this.authService.getDesignation() === 'DOCTOR');
-  hasReceptionAccess = computed(() => {
-    const d = this.authService.getDesignation();
-    return d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST';
-  });
 
   // A doctor may manage only their own appointments
   isOwnDoctorAppointment = computed(
     () =>
       this.isDoctor() &&
       this.appointment()?.doctorEmployeeId ===
-        this.authService.getCurrentUser()?.employeeCode,
+      this.authService.getCurrentUser()?.employeeCode,
   );
 
-  // Reception staff and the assigned doctor can edit/cancel — only before the slot starts
+  // Doctors act only on their own appointments while other designations rely on permissions alone
+  private readonly passesDoctorScope = computed(
+    () => !this.isDoctor() || this.isOwnDoctorAppointment(),
+  );
+
+  // Permission holders can edit/cancel — only before the slot starts
   canEdit = computed(
     () =>
-      (this.hasReceptionAccess() || this.isOwnDoctorAppointment()) &&
+      this.permissionService.can('UPDATE_APPOINTMENT') &&
+      this.passesDoctorScope() &&
       this.appointment()?.status === 'BOOKED' &&
       !this.startTimePassed(),
   );
 
   canCancel = computed(
     () =>
-      (this.hasReceptionAccess() || this.isOwnDoctorAppointment()) &&
+      this.permissionService.can('CANCEL_APPOINTMENT') &&
+      this.passesDoctorScope() &&
       this.appointment()?.status === 'BOOKED' &&
       !this.startTimePassed(),
   );
 
   hasRecord = computed(() => this.medicalRecord() !== null);
 
-  // Mark unattended is available to any role for a BOOKED slot with no record once the slot has started
+  // Mark unattended needs its own permission for a BOOKED slot with no record once the slot has started
   canMarkUnattended = computed(
     () =>
+      this.permissionService.can('MARK_APPOINTMENT_UNATTENDED') &&
+      this.passesDoctorScope() &&
       this.appointment()?.status === 'BOOKED' &&
       !this.hasRecord() &&
       this.startTimePassed(),
@@ -94,6 +101,11 @@ export class AppointmentDetailComponent implements OnInit {
   // Generate record: BOOKED, no record yet, and the start time has passed
   canGenerateRecord = computed(
     () =>
+      this.permissionService.canAny([
+        'CREATE_MEDICAL_RECORD_DRAFT',
+        'CREATE_AND_FINALIZE_MEDICAL_RECORD',
+      ]) &&
+      this.passesDoctorScope() &&
       this.appointment()?.status === 'BOOKED' &&
       !this.hasRecord() &&
       this.startTimePassed(),
@@ -101,7 +113,14 @@ export class AppointmentDetailComponent implements OnInit {
 
   // Existing DRAFT can be edited; FINALIZED can be viewed
   canEditRecord = computed(
-    () => this.hasRecord() && this.medicalRecord()?.status === 'DRAFT',
+    () =>
+      this.permissionService.canAny([
+        'CREATE_MEDICAL_RECORD_DRAFT',
+        'VERIFY_AND_FINALIZE_MEDICAL_RECORD',
+      ]) &&
+      this.passesDoctorScope() &&
+      this.hasRecord() &&
+      this.medicalRecord()?.status === 'DRAFT',
   );
   canViewRecord = computed(
     () => this.hasRecord() && this.medicalRecord()?.status === 'FINALIZED',

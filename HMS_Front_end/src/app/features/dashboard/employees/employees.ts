@@ -8,6 +8,7 @@ import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-
 import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AdminService } from '../../../core/services/admin.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -38,6 +39,7 @@ import {
 })
 export class EmployeesListComponent implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
@@ -143,13 +145,21 @@ export class EmployeesListComponent implements OnInit {
     });
   }
 
-  // Never expose edit or delete for any privileged owner or admin row that slips through
-  canEdit(item: EmployeeListItem): boolean {
+  // Permission gated, and never exposed for any privileged owner or admin row that slips through
+  private isStaffRow(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }
 
+  canCreate(): boolean {
+    return this.permissionService.can('CREATE_EMPLOYEE');
+  }
+
+  canEdit(item: EmployeeListItem): boolean {
+    return this.permissionService.can('UPDATE_EMPLOYEE') && this.isStaffRow(item);
+  }
+
   canDelete(item: EmployeeListItem): boolean {
-    return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
+    return this.permissionService.can('DELETE_EMPLOYEE') && this.isStaffRow(item);
   }
 
   async deleteEmployee(item: EmployeeListItem): Promise<void> {

@@ -1,242 +1,236 @@
 <app-dashboard-layout pageTitle="Approvals">
   <div class="page">
     <div class="tabs">
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="tab() === 'registrations'"
-        (click)="switchTab('registrations')"
-      >
+      <button type="button" class="tab-btn" [class.active]="tab() === 'registrations'"
+        (click)="switchTab('registrations')">
         Registration Requests
         <span class="tab-count">{{ regTotal() }}</span>
       </button>
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="tab() === 'profileChanges'"
-        (click)="switchTab('profileChanges')"
-      >
+      <button type="button" class="tab-btn" [class.active]="tab() === 'profileChanges'"
+        (click)="switchTab('profileChanges')">
         Profile Change Requests
         <span class="tab-count">{{ changeTotal() }}</span>
       </button>
     </div>
 
     @if (tab() === 'registrations') {
-      @if (loadingReg()) {
-        <div class="loading-box">Loading…</div>
-      } @else if (registrations().length === 0) {
-        <div class="empty-box">No pending registration requests.</div>
-      } @else {
-        <div class="table-card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Designation</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of registrations(); track trackByCode($index, item)) {
-                <tr (click)="openRegistration(item)" (keydown.enter)="openRegistration(item)" (keydown.space)="openRegistration(item); $event.preventDefault()" class="clickable" tabindex="0">
-                  <td>{{ item.employee.employeeCode }}</td>
-                  <td>{{ item.employee.name }}</td>
-                  <td>{{ item.employee.email }}</td>
-                  <td>{{ item.employee.department }}</td>
-                  <td><span class="badge">{{ item.employee.designation }}</span></td>
-                  <td class="row-actions">View →</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+    @if (loadingReg()) {
+    <div class="loading-box">Loading…</div>
+    } @else if (registrations().length === 0) {
+    <div class="empty-box">No pending registration requests.</div>
+    } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of registrations(); track trackByCode($index, item)) {
+          <tr (click)="openRegistration(item)" (keydown.enter)="openRegistration(item)"
+            (keydown.space)="openRegistration(item); $event.preventDefault()" class="clickable" tabindex="0">
+            <td>{{ item.employee.employeeCode }}</td>
+            <td>{{ item.employee.name }}</td>
+            <td>{{ item.employee.email }}</td>
+            <td>{{ item.employee.department }}</td>
+            <td><span class="badge">{{ item.employee.designation }}</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-        @if (regTotalPages() > 1) {
-          <app-pagination
-            [page]="regPage()"
-            [totalPages]="regTotalPages()"
-            [total]="regTotal()"
-            [disabled]="loadingReg()"
-            (pageChange)="goToRegPage($event)" />
-        }
-      }
+    @if (regTotalPages() > 1) {
+    <app-pagination [page]="regPage()" [totalPages]="regTotalPages()" [total]="regTotal()" [disabled]="loadingReg()"
+      (pageChange)="goToRegPage($event)" />
+    }
+    }
     }
 
     @if (tab() === 'profileChanges') {
-      @if (loadingChanges()) {
-        <div class="loading-box">Loading…</div>
-      } @else if (changes().length === 0) {
-        <div class="empty-box">No pending profile change requests.</div>
-      } @else {
-        <div class="table-card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Employee Code</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Submitted</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (req of changes(); track trackByRequest($index, req)) {
-                <tr (click)="openChange(req)" (keydown.enter)="openChange(req)" (keydown.space)="openChange(req); $event.preventDefault()" class="clickable" tabindex="0">
-                  <td>{{ req.requestId }}</td>
-                  <td>{{ req.employeeCode }}</td>
-                  <td>{{ req.employeeName }}</td>
-                  <td>{{ req.email }}</td>
-                  <td>{{ req.created_at | date: 'short' }}</td>
-                  <td class="row-actions">View →</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+    @if (loadingChanges()) {
+    <div class="loading-box">Loading…</div>
+    } @else if (changes().length === 0) {
+    <div class="empty-box">No pending profile change requests.</div>
+    } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Employee Code</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Submitted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (req of changes(); track trackByRequest($index, req)) {
+          <tr (click)="openChange(req)" (keydown.enter)="openChange(req)"
+            (keydown.space)="openChange(req); $event.preventDefault()" class="clickable" tabindex="0">
+            <td>{{ req.requestId }}</td>
+            <td>{{ req.employeeCode }}</td>
+            <td>{{ req.employeeName }}</td>
+            <td>{{ req.email }}</td>
+            <td>{{ req.created_at | date: 'short' }}</td>
+            <td class="row-actions">View →</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-        @if (changeTotalPages() > 1) {
-          <app-pagination
-            [page]="changePage()"
-            [totalPages]="changeTotalPages()"
-            [total]="changeTotal()"
-            [disabled]="loadingChanges()"
-            (pageChange)="goToChangePage($event)" />
-        }
-      }
+    @if (changeTotalPages() > 1) {
+    <app-pagination [page]="changePage()" [totalPages]="changeTotalPages()" [total]="changeTotal()"
+      [disabled]="loadingChanges()" (pageChange)="goToChangePage($event)" />
+    }
+    }
     }
   </div>
 
   <!-- Registration detail modal -->
   @if (selectedRegistration(); as item) {
-    <div class="modal-backdrop" (click)="closeRegistration()" (keydown.escape)="closeRegistration()">
-      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">{{ item.employee.name }}</h3>
-            <p class="modal-sub">{{ item.employee.employeeCode }} · Pending Approval</p>
-          </div>
-          <button type="button" class="modal-close" (click)="closeRegistration()">✕</button>
+  <div class="modal-backdrop" (click)="closeRegistration()" (keydown.escape)="closeRegistration()">
+    <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">{{ item.employee.name }}</h3>
+          <p class="modal-sub">{{ item.employee.employeeCode }} · Pending Approval</p>
         </div>
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail">
-              <span class="detail-label">Email</span>
-              <span class="detail-value">{{ item.employee.email }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Phone</span>
-              <span class="detail-value">{{ item.employee.phone }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Department</span>
-              <span class="detail-value">{{ item.employee.department }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Designation</span>
-              <span class="detail-value">{{ item.employee.designation }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Joining Date</span>
-              <span class="detail-value">
-                @if (item.employee.joiningDate) {
-                  {{ item.employee.joiningDate | date: 'mediumDate' }}
-                } @else { — }
-              </span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Qualification</span>
-              <span class="detail-value">
-                {{ (item.employee.qualification || []).join(', ') || '—' }}
-              </span>
-            </div>
-            @if (item.employee.medicalRegistrationNumber) {
-              <div class="detail">
-                <span class="detail-label">Med. Registration No</span>
-                <span class="detail-value">
-                  {{ item.employee.medicalRegistrationNumber }}
-                </span>
-              </div>
-            }
-            @if (item.employee.specialization) {
-              <div class="detail">
-                <span class="detail-label">Specialization</span>
-                <span class="detail-value">{{ item.employee.specialization }}</span>
-              </div>
-            }
-            @if (item.employee.consultationFee != null) {
-              <div class="detail">
-                <span class="detail-label">Consultation Fee</span>
-                <span class="detail-value">{{ item.employee.consultationFee }}</span>
-              </div>
-            }
+        <button type="button" class="modal-close" (click)="closeRegistration()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ item.employee.email }}</span>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectRegistration(item)">
-            Reject
-          </button>
-          <button type="button" class="btn btn-success" (click)="approveRegistration(item)">
-            Approve
-          </button>
+          <div class="detail">
+            <span class="detail-label">Phone</span>
+            <span class="detail-value">{{ item.employee.phone }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Department</span>
+            <span class="detail-value">{{ item.employee.department }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Designation</span>
+            <span class="detail-value">{{ item.employee.designation }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Joining Date</span>
+            <span class="detail-value">
+              @if (item.employee.joiningDate) {
+              {{ item.employee.joiningDate | date: 'mediumDate' }}
+              } @else { — }
+            </span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Qualification</span>
+            <span class="detail-value">
+              {{ (item.employee.qualification || []).join(', ') || '—' }}
+            </span>
+          </div>
+          @if (item.employee.medicalRegistrationNumber) {
+          <div class="detail">
+            <span class="detail-label">Med. Registration No</span>
+            <span class="detail-value">
+              {{ item.employee.medicalRegistrationNumber }}
+            </span>
+          </div>
+          }
+          @if (item.employee.specialization) {
+          <div class="detail">
+            <span class="detail-label">Specialization</span>
+            <span class="detail-value">{{ item.employee.specialization }}</span>
+          </div>
+          }
+          @if (item.employee.consultationFee != null) {
+          <div class="detail">
+            <span class="detail-label">Consultation Fee</span>
+            <span class="detail-value">{{ item.employee.consultationFee }}</span>
+          </div>
+          }
         </div>
       </div>
+      <div class="modal-footer">
+        @if (canRejectEmployee()) {
+        <button type="button" class="btn btn-danger" (click)="rejectRegistration(item)">
+          Reject
+        </button>
+        }
+        @if (canApproveEmployee()) {
+        <button type="button" class="btn btn-success" (click)="approveRegistration(item)">
+          Approve
+        </button>
+        }
+      </div>
     </div>
+  </div>
   }
 
   <!-- Profile-change detail modal: only employeeCode/name/email + diffs -->
   @if (selectedChange(); as req) {
-    <div class="modal-backdrop" (click)="closeChange()" (keydown.escape)="closeChange()">
-      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">Profile Change Request</h3>
-            <p class="modal-sub">{{ req.requestId }}</p>
-          </div>
-          <button type="button" class="modal-close" (click)="closeChange()">✕</button>
+  <div class="modal-backdrop" (click)="closeChange()" (keydown.escape)="closeChange()">
+    <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Profile Change Request</h3>
+          <p class="modal-sub">{{ req.requestId }}</p>
         </div>
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail">
-              <span class="detail-label">Employee Code</span>
-              <span class="detail-value">{{ req.employeeCode }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Name</span>
-              <span class="detail-value">{{ req.employeeName }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Email</span>
-              <span class="detail-value">{{ req.email }}</span>
-            </div>
+        <button type="button" class="modal-close" (click)="closeChange()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail">
+            <span class="detail-label">Employee Code</span>
+            <span class="detail-value">{{ req.employeeCode }}</span>
           </div>
+          <div class="detail">
+            <span class="detail-label">Name</span>
+            <span class="detail-value">{{ req.employeeName }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ req.email }}</span>
+          </div>
+        </div>
 
-          <h4 class="detail-section">Requested Changes</h4>
-          <ul class="diff-list">
-            @for (entry of changeEntries(req); track entry.field) {
-              <li class="diff-row">
-                <div class="diff-field">{{ formatField(entry.field) }}</div>
-                <div class="diff-values">
-                  <span class="diff-old">{{ formatValue(entry.diff.old) }}</span>
-                  <span class="diff-arrow">→</span>
-                  <span class="diff-new">{{ formatValue(entry.diff.new) }}</span>
-                </div>
-              </li>
-            }
-          </ul>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectChange(req)">
-            Reject
-          </button>
-          <button type="button" class="btn btn-success" (click)="approveChange(req)">
-            Approve
-          </button>
-        </div>
+        <h4 class="detail-section">Requested Changes</h4>
+        <ul class="diff-list">
+          @for (entry of changeEntries(req); track entry.field) {
+          <li class="diff-row">
+            <div class="diff-field">{{ formatField(entry.field) }}</div>
+            <div class="diff-values">
+              <span class="diff-old">{{ formatValue(entry.diff.old) }}</span>
+              <span class="diff-arrow">→</span>
+              <span class="diff-new">{{ formatValue(entry.diff.new) }}</span>
+            </div>
+          </li>
+          }
+        </ul>
+      </div>
+      <div class="modal-footer">
+        @if (canRejectChange()) {
+        <button type="button" class="btn btn-danger" (click)="rejectChange(req)">
+          Reject
+        </button>
+        }
+        @if (canApproveChange()) {
+        <button type="button" class="btn btn-success" (click)="approveChange(req)">
+          Approve
+        </button>
+        }
       </div>
     </div>
+  </div>
   }
 </app-dashboard-layout>

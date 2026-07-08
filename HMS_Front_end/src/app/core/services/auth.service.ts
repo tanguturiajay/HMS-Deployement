@@ -171,8 +171,8 @@ export class AuthService {
     this.http
       .post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
       .subscribe({
-        next: () => {},
-        error: () => {},
+        next: () => { },
+        error: () => { },
       });
     this.clearSession();
     if (navigate) {
@@ -226,6 +226,15 @@ export class AuthService {
     } catch {
       this.clearSession();
     }
+  }
+
+  // Patches the stored user's permissions after a poll refresh
+  patchPermissions(permissions: string[]): void {
+    const user = this.getCurrentUser();
+    if (!user) {
+      return;
+    }
+    this.persistUser({ ...user, permissions });
   }
 
   // Accessors

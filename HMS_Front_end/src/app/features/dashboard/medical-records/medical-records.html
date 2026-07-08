@@ -2,65 +2,36 @@
   <div class="page">
 
     @if (scopedToPatient()) {
-      <div class="scope-note">
-        Showing medical records for patient <strong>{{ patientUHID() }}</strong>.
-      </div>
+    <div class="scope-note">
+      Showing medical records for patient <strong>{{ patientUHID() }}</strong>.
+    </div>
     }
 
     @if (scopedToDoctor()) {
-      <div class="scope-note">
-        Showing medical records for doctor <strong>{{ doctorEmployeeId() }}</strong>.
-      </div>
+    <div class="scope-note">
+      Showing medical records for doctor <strong>{{ doctorEmployeeId() }}</strong>.
+    </div>
     }
 
     <!-- Search toolbar -->
     <div class="toolbar">
       <div class="search-grid">
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Patient UHID"
-          [ngModel]="patientUHID()"
-          (ngModelChange)="patientUHID.set($event)"
-          (keyup.enter)="search()"
-          [disabled]="scopedToPatient()" />
+        <input type="text" class="form-input" placeholder="Patient UHID" [ngModel]="patientUHID()"
+          (ngModelChange)="patientUHID.set($event)" (keyup.enter)="search()" [disabled]="scopedToPatient()" />
 
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Patient Name"
-          [ngModel]="patientName()"
-          (ngModelChange)="patientName.set($event)"
-          (keyup.enter)="search()"
-          [disabled]="scopedToPatient()" />
+        <input type="text" class="form-input" placeholder="Patient Name" [ngModel]="patientName()"
+          (ngModelChange)="patientName.set($event)" (keyup.enter)="search()" [disabled]="scopedToPatient()" />
 
-        @if (!isDoctor()) {
-          <input
-            type="text"
-            class="form-input"
-            placeholder="Doctor ID"
-            [ngModel]="doctorEmployeeId()"
-            (ngModelChange)="doctorEmployeeId.set($event)"
-            (keyup.enter)="search()"
-            [disabled]="scopedToDoctor()" />
+        @if (canViewAll()) {
+        <input type="text" class="form-input" placeholder="Doctor ID" [ngModel]="doctorEmployeeId()"
+          (ngModelChange)="doctorEmployeeId.set($event)" (keyup.enter)="search()" [disabled]="scopedToDoctor()" />
 
-          <input
-            type="text"
-            class="form-input"
-            placeholder="Doctor Name"
-            [ngModel]="doctorName()"
-            (ngModelChange)="doctorName.set($event)"
-            (keyup.enter)="search()"
-            [disabled]="scopedToDoctor()" />
+        <input type="text" class="form-input" placeholder="Doctor Name" [ngModel]="doctorName()"
+          (ngModelChange)="doctorName.set($event)" (keyup.enter)="search()" [disabled]="scopedToDoctor()" />
         }
 
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Appointment ID"
-          [ngModel]="appointmentId()"
-          (ngModelChange)="appointmentId.set($event)"
-          (keyup.enter)="search()" />
+        <input type="text" class="form-input" placeholder="Appointment ID" [ngModel]="appointmentId()"
+          (ngModelChange)="appointmentId.set($event)" (keyup.enter)="search()" />
       </div>
 
       <div class="toolbar-actions">
@@ -70,56 +41,46 @@
     </div>
 
     @if (loading()) {
-      <div class="loading-box">Loading medical records…</div>
+    <div class="loading-box">Loading medical records…</div>
     } @else if (records().length === 0) {
-      <div class="empty-box"><p>No medical records to show.</p></div>
+    <div class="empty-box">
+      <p>No medical records to show.</p>
+    </div>
     } @else {
-      <div class="table-card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Record ID</th>
-              <th>Patient UHID</th>
-              <th>Patient</th>
-              <th>Doctor ID</th>
-              <th>Doctor</th>
-              <th>Appointment ID</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (r of records(); track trackById($index, r)) {
-              <tr
-                class="clickable"
-                tabindex="0"
-                (click)="open(r)"
-                (keydown.enter)="open(r)"
-                (keydown.space)="open(r)">
-                <td>{{ r.medicalRecordId }}</td>
-                <td>{{ r.patientUHID }}</td>
-                <td>{{ r.patientName }}</td>
-                <td>{{ r.doctorEmployeeId }}</td>
-                <td>{{ r.doctorName }}</td>
-                <td>{{ r.appointmentId }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Record ID</th>
+            <th>Patient UHID</th>
+            <th>Patient</th>
+            <th>Doctor ID</th>
+            <th>Doctor</th>
+            <th>Appointment ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of records(); track trackById($index, r)) {
+          <tr class="clickable" tabindex="0" (click)="open(r)" (keydown.enter)="open(r)" (keydown.space)="open(r)">
+            <td>{{ r.medicalRecordId }}</td>
+            <td>{{ r.patientUHID }}</td>
+            <td>{{ r.patientName }}</td>
+            <td>{{ r.doctorEmployeeId }}</td>
+            <td>{{ r.doctorName }}</td>
+            <td>{{ r.appointmentId }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-      @if (totalPages() > 1) {
-        <app-pagination
-          [page]="page()"
-          [totalPages]="totalPages()"
-          [total]="total()"
-          (pageChange)="goToPage($event)" />
-      }
+    @if (totalPages() > 1) {
+    <app-pagination [page]="page()" [totalPages]="totalPages()" [total]="total()" (pageChange)="goToPage($event)" />
+    }
     }
   </div>
 
   @if (selected(); as record) {
-    <app-medical-record-detail-dialog
-      [record]="record"
-      (closed)="closeDialog()"
-      (deleted)="onDeleted()" />
+  <app-medical-record-detail-dialog [record]="record" (closed)="closeDialog()" (deleted)="onDeleted()" />
   }
 </app-dashboard-layout>

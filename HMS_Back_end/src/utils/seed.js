@@ -3,11 +3,13 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const seedNodes = require("./seedNodes");
+const seedPermissions = require("./seedPermissions");
 const seedOwner = require("./seedOwner");
 
 // Runs all seeders in order on the current connection; throws on the first failure
 const runSeeders = async () => {
   await seedNodes();
+  await seedPermissions();
   await seedOwner();
 };
 

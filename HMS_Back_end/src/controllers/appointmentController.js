@@ -11,6 +11,7 @@ const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
 const hasFieldChanges = require("../utils/hasFieldChanges");
+const { hasPermission } = require("../middlewares/requirePermission");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -91,6 +92,11 @@ exports.getAppointments = async (req, res) => {
         filter.patientUHID = partial(req.query.patientUHID);
     }
 
+    // Without the all-scope the caller only sees appointments where they are the doctor
+    if (!(await hasPermission(req, "VIEW_ALL_APPOINTMENTS"))) {
+        filter.doctorEmployeeId = req.user.employeeCode;
+    }
+
     return paginateAppointments(filter, req.query, res);
 };
 
@@ -129,9 +135,9 @@ exports.getAppointmentById = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    // A doctor may only access their own appointments
-    const actor = await resolveActor(req.user);
-    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+    // Without the all-scope the caller may only open their own appointments
+    const canViewAll = await hasPermission(req, "VIEW_ALL_APPOINTMENTS");
+    if (!canViewAll && appointment.doctorEmployeeId !== req.user.employeeCode) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
     }
 

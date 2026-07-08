@@ -17,7 +17,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
@@ -38,7 +38,7 @@ import {
   FOOD_RELATION_SHORT_LABELS,
 } from '../../../core/models/medical-record.model';
 
-// Create or edit dialog for a medical record where doctors may finalize and staff are locked to DRAFT
+// Create or edit dialog for a medical record where finalize permission holders may finalize and everyone else is locked to DRAFT
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-record-form-dialog',
@@ -49,7 +49,7 @@ import {
 })
 export class MedicalRecordFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly auth = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirm = inject(ConfirmModalService);
@@ -65,7 +65,14 @@ export class MedicalRecordFormDialogComponent implements OnInit {
 
   saving = signal(false);
 
-  isDoctor = computed(() => this.auth.getDesignation() === 'DOCTOR');
+  // Creating finalizes with the create permission while editing a draft finalizes with the verify permission
+  canFinalize = computed(() =>
+    this.permissionService.can(
+      this.existingRecord
+        ? 'VERIFY_AND_FINALIZE_MEDICAL_RECORD'
+        : 'CREATE_AND_FINALIZE_MEDICAL_RECORD',
+    ),
+  );
 
   // Dropdown option sources / label maps exposed to the template
   readonly categories = ADMINISTRATION_CATEGORIES;
@@ -243,10 +250,10 @@ export class MedicalRecordFormDialogComponent implements OnInit {
     )}:${pad(d.getMinutes())}`;
   }
 
-  // Primary button label adapts to role / edit-state / chosen status
+  // Primary button label adapts to permission / edit-state / chosen status
   primaryLabel = computed(() => {
     const editing = !!this.existingRecord;
-    if (!this.isDoctor()) {
+    if (!this.canFinalize()) {
       return editing ? 'Update Draft' : 'Generate Medical Record';
     }
     const finalizing = this.statusSig() === 'FINALIZED';
@@ -319,8 +326,8 @@ export class MedicalRecordFormDialogComponent implements OnInit {
       return;
     }
 
-    // Staff are always DRAFT; doctors honour the status dropdown
-    const status: MedicalRecordStatus = this.isDoctor()
+    // Without the finalize permission the record always stays DRAFT
+    const status: MedicalRecordStatus = this.canFinalize()
       ? this.form.value.status
       : 'DRAFT';
 
@@ -340,9 +347,9 @@ export class MedicalRecordFormDialogComponent implements OnInit {
     const request$ = this.existingRecord
       ? this.service.update(this.existingRecord.medicalRecordId, payload)
       : this.service.create({
-          appointmentId: this.appointmentId,
-          ...payload,
-        });
+        appointmentId: this.appointmentId,
+        ...payload,
+      });
 
     request$.subscribe({
       next: (res) => {

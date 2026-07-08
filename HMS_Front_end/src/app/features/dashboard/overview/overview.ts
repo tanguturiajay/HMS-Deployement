@@ -6,6 +6,7 @@ import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AuthService } from '../../../core/services/auth.service';
 import { AdminService } from '../../../core/services/admin.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { AuditLog } from '../../../core/models/audit.model';
 
 // Audit feed page size on the overview
@@ -30,6 +31,7 @@ export class OverviewComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly adminService = inject(AdminService);
   private readonly dashboardService = inject(DashboardService);
+  private readonly permissionService = inject(PermissionService);
 
   // Stats
   activeEmployees = signal<number | null>(null);
@@ -70,12 +72,18 @@ export class OverviewComponent implements OnInit {
     () => this.isOwnerOrAdmin() || this.isReceptionist(),
   );
 
+  // The audit feed follows its permission instead of the designation
+  canViewAudit = computed(() =>
+    this.permissionService.can('VIEW_AUDIT_LOGS'),
+  );
+
   ngOnInit(): void {
-    if (this.isOwnerOrAdmin()) {
-      this.loadStats();
-      // Audit feed paginates independently of the stat cards
+    // Audit feed paginates independently of the stat cards
+    if (this.canViewAudit()) {
       this.loadAuditLogs(1);
-    } else if (this.isReceptionist() || this.isDoctor()) {
+    }
+
+    if (this.isOwnerOrAdmin() || this.isReceptionist() || this.isDoctor()) {
       this.loadStats();
     } else {
       this.loading.set(false);

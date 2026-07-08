@@ -28,6 +28,10 @@ const MESSAGES = Object.freeze({
         INVALID_TOKEN: "Invalid or expired token",
         LOGIN_SUCCESS: "Login successful",
         LOGOUT_SUCCESS: "User has been logged out successfully",
+        MISSING_PERMISSION: (permissions, requireAll = false) => {
+            const separator = requireAll ? "' and '" : "' or '";
+            return `Access Denied: You lack the required permission(s) ('${permissions.join(separator)}') to perform this action.`;
+        },
         NO_TOKEN: "No token provided",
         PASSWORDS_DO_NOT_MATCH: "Passwords do not match", // NOSONAR not a credential
         PASSWORD_CHANGED: "Password changed successfully", // NOSONAR not a credential
@@ -175,9 +179,20 @@ const MESSAGES = Object.freeze({
         DELETED: "Node deleted successfully",
         LIST_RETRIEVED: "Nodes retrieved successfully",
         NOT_FOUND: "Node not found",
+        OWNER_LOCKED: "This is a system node and its access is locked to OWNER",
         PATH_EXISTS: "Node path already exists",
         SYSTEM_LOCKED: "This is a management node and can only be assigned to OWNER or ADMIN",
         UPDATED: "Node updated successfully"
+    }),
+
+    // Designation action permissions
+    PERMISSION: Object.freeze({
+        LIST_RETRIEVED: "Permissions retrieved successfully",
+        MY_RETRIEVED: "Your permissions retrieved successfully",
+        NODE_ACCESS_REQUIRED: "Permissions can only be granted for modules the designation can access from the sidebar",
+        NOT_ELIGIBLE: "Some of the selected permissions cannot be granted to this designation",
+        OWNER_LOCKED: "Owner permissions cannot be modified",
+        UPDATED: "Permissions updated successfully"
     }),
 
     // Dashboard statistics
@@ -238,6 +253,7 @@ const MESSAGES = Object.freeze({
         NODE_CREATED: (name, nodeId) => `Menu node ${name} (${nodeId}) was created`,
         NODE_DELETED: (name, nodeId) => `Menu node ${name} (${nodeId}) was deleted`,
         NODE_UPDATED: (name, nodeId) => `Menu node ${name} (${nodeId}) was updated`,
+        PERMISSIONS_UPDATED: (designation) => `Action permissions updated for the ${designation} designation`,
         PATIENT_DELETED: (name, uhid) => `Patient ${name} (${uhid}) was deleted`,
         PATIENT_PROFILE_UPDATED: (name, uhid) => `Patient ${name} (${uhid}) updated their profile`,
         PATIENT_REGISTERED: (name, uhid) => `Patient ${name} (${uhid}) was registered`,

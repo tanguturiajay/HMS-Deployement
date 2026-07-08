@@ -18,6 +18,7 @@ const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const getCurrentUser = require("../utils/getCurrentUser");
+const getEffectivePermissions = require("../utils/getEffectivePermissions");
 const recordAudit = require("../utils/recordAudit");
 const { RESTRICTED_ROLES_SET } = require("../constants/domain");
 const AppError = require("../utils/AppError");
@@ -80,11 +81,13 @@ exports.login = async (req, res) => {
     }
 
     const profile = buildEmployeeProfile(employee);
+    const permissions = await getEffectivePermissions(user.roles, employee.designation);
 
     // Short-lived access token; the EMPLOYEE marker blocks use on patient routes
     const accessToken = signAccessToken({
         employeeCode: user.employeeCode,
         roles: user.roles,
+        designation: employee.designation,
         tokenVersion: user.tokenVersion,
         type: "EMPLOYEE"
     });
@@ -115,6 +118,7 @@ exports.login = async (req, res) => {
             roles: user.roles,
             mustChangePassword: user.mustChangePassword,
             lastLoginAt: user.lastLoginAt,
+            permissions,
             profile
         }
     });
@@ -386,9 +390,15 @@ exports.refresh = async (req, res) => {
 
     setRefreshCookie(res, result.newRefreshToken);
 
+    // Re-read the designation so a rotated token always carries the current claim
+    const employee = await Employee.findOne({
+        employeeCode: user.employeeCode
+    }).select("designation");
+
     const accessToken = signAccessToken({
         employeeCode: user.employeeCode,
         roles: user.roles,
+        designation: employee?.designation,
         tokenVersion: user.tokenVersion,
         type: "EMPLOYEE"
     });

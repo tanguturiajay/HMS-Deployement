@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
 import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { OwnerService } from '../../../core/services/owner.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -22,9 +23,15 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
 })
 export class AdminsComponent implements OnInit {
   private readonly ownerService = inject(OwnerService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
+
+  // Action buttons follow the granted permissions
+  canCreate = computed(() => this.permissionService.can('CREATE_ADMIN'));
+  canEdit = computed(() => this.permissionService.can('UPDATE_ADMIN'));
+  canDelete = computed(() => this.permissionService.can('DELETE_ADMIN'));
 
   admins = signal<EmployeeListItem[]>([]);
   loading = signal(true);

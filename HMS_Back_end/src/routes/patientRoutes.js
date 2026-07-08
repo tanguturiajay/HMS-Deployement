@@ -3,7 +3,7 @@ const router = express.Router();
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeNode = require("../middlewares/authorizeNode");
-const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
+const requirePermission = require("../middlewares/requirePermission");
 const controller = require("../controllers/patientController");
 const {
     createPatientValidation,
@@ -11,12 +11,13 @@ const {
     uhidValidation
 } = require("../validators/patientValidators");
 
-// Module door is driven by the Patients sidebar node; delete keeps its own role check below
+// The module door is driven by the Patients sidebar node and grants view only while mutations need explicit permissions
 router.use(auth, authorizeNode("/dashboard/patients"));
 
 // Patient CRUD routes
 router.post(
     "/create-patient",
+    requirePermission("CREATE_PATIENT"),
     createPatientValidation,
     validate,
     controller.createPatient
@@ -42,15 +43,15 @@ router.get(
 
 router.put(
     "/:UHID",
+    requirePermission("UPDATE_PATIENT"),
     updatePatientValidation,
     validate,
     controller.updatePatient
 );
 
-// Soft delete restricted to admin and owner since a receptionist passes the designation guard but not the role guard
 router.delete(
     "/:UHID",
-    authorizeRoles("OWNER", "ADMIN"),
+    requirePermission("DELETE_PATIENT"),
     uhidValidation,
     validate,
     controller.deletePatient

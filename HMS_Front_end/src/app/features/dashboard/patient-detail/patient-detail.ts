@@ -9,7 +9,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -45,11 +45,10 @@ import {
   styleUrl: './patient-detail.css',
 })
 export class PatientDetailComponent
-  implements OnInit, CanComponentDeactivate
-{
+  implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly patientService = inject(PatientService);
-  private readonly authService = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly route = inject(ActivatedRoute);
@@ -64,11 +63,9 @@ export class PatientDetailComponent
   deleting = signal(false);
   submittedOk = false;
 
-  // Only admin/owner may delete a patient
-  isPrivileged = computed(() => {
-    const d = this.authService.getDesignation();
-    return d === 'OWNER' || d === 'ADMIN';
-  });
+  // Action buttons follow the granted permissions
+  canEdit = computed(() => this.permissionService.can('UPDATE_PATIENT'));
+  canDelete = computed(() => this.permissionService.can('DELETE_PATIENT'));
 
   genders = GENDERS;
   statuses = PATIENT_STATUSES;

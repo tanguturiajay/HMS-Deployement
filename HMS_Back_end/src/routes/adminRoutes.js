@@ -3,7 +3,8 @@ const router = express.Router();
 const { param } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
-const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
+const authorizeNode = require("../middlewares/authorizeNode");
+const requirePermission = require("../middlewares/requirePermission");
 const controller = require("../controllers/adminController");
 const {
   employeeBaseValidators,
@@ -11,8 +12,12 @@ const {
 } = require("../validators/employeeValidation");
 const { nameValidator } = require("../validators/sharedValidators");
 
-// All the routes require authentication and admin-level authorization
-router.use(auth, authorizeRoles("OWNER", "ADMIN"));
+// All the routes require authentication
+router.use(auth);
+
+// Module doors driven by the Employees and Approvals sidebar nodes while mutations need explicit permissions
+const EMPLOYEES_DOOR = authorizeNode("/dashboard/employees");
+const APPROVALS_DOOR = authorizeNode("/dashboard/approvals");
 
 // Full employee field set plus joining date
 const employeeCreationValidation = [
@@ -39,24 +44,29 @@ const requestIdValidation = [
 // Employee management routes
 router.post(
   "/create-employee",
+  EMPLOYEES_DOOR,
+  requirePermission("CREATE_EMPLOYEE"),
   employeeCreationValidation,
   validate,
   controller.createEmployee,
 );
 
-router.get("/employees", controller.getEmployees);
+router.get("/employees", EMPLOYEES_DOOR, controller.getEmployees);
 
 router.get(
   "/employees/:employeeCode",
+  EMPLOYEES_DOOR,
   employeeCodeValidation,
   validate,
   controller.getEmployee,
 );
 
-router.get("/pending-employees", controller.getPendingEmployees);
+router.get("/pending-employees", APPROVALS_DOOR, controller.getPendingEmployees);
 
 router.put(
   "/approve-employee/:employeeCode",
+  APPROVALS_DOOR,
+  requirePermission("APPROVE_EMPLOYEE"),
   employeeCodeValidation,
   validate,
   controller.approveEmployee,
@@ -64,6 +74,8 @@ router.put(
 
 router.put(
   "/reject-employee/:employeeCode",
+  APPROVALS_DOOR,
+  requirePermission("REJECT_EMPLOYEE"),
   employeeCodeValidation,
   validate,
   controller.rejectEmployee,
@@ -71,6 +83,8 @@ router.put(
 
 router.put(
   "/update-employee/:employeeCode",
+  EMPLOYEES_DOOR,
+  requirePermission("UPDATE_EMPLOYEE"),
   employeeUpdateValidation,
   validate,
   controller.updateEmployee,
@@ -78,19 +92,23 @@ router.put(
 
 router.delete(
   "/delete-employee/:employeeCode",
+  EMPLOYEES_DOOR,
+  requirePermission("DELETE_EMPLOYEE"),
   employeeCodeValidation,
   validate,
   controller.deleteEmployee,
 );
 
-// Audit log route
-router.get("/audit-logs", controller.getAuditLogs);
+// Audit feed renders on the Overview page, so only the permission gates it
+router.get("/audit-logs", requirePermission("VIEW_AUDIT_LOGS"), controller.getAuditLogs);
 
 // Profile change request routes
-router.get("/profile-change-requests", controller.getProfileChangeRequests);
+router.get("/profile-change-requests", APPROVALS_DOOR, controller.getProfileChangeRequests);
 
 router.put(
   "/approve-profile-change/:requestId",
+  APPROVALS_DOOR,
+  requirePermission("APPROVE_PROFILE_CHANGE"),
   requestIdValidation,
   validate,
   controller.approveProfileChange,
@@ -98,6 +116,8 @@ router.put(
 
 router.put(
   "/reject-profile-change/:requestId",
+  APPROVALS_DOOR,
+  requirePermission("REJECT_PROFILE_CHANGE"),
   requestIdValidation,
   validate,
   controller.rejectProfileChange,

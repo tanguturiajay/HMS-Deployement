@@ -1,0 +1,63 @@
+<app-dashboard-layout pageTitle="Permissions">
+    <div class="page">
+        @if (loading()) {
+        <div class="loading-box">Loading permissions…</div>
+        } @else {
+        <!-- Designation picker -->
+        <div class="designation-bar">
+            @for (d of designations(); track d) {
+            <button type="button" class="designation-chip" [class.active]="selectedDesignation() === d"
+                [disabled]="saving()" (click)="selectDesignation(d)">
+                {{ d }}
+            </button>
+            }
+        </div>
+
+        @if (isOwnerSelected()) {
+        <div class="info-box">
+            The owner always holds every permission. This row cannot be edited.
+        </div>
+        }
+
+        <!-- Module-grouped permission matrix -->
+        <div class="groups">
+            @for (group of groups(); track group.module) {
+            <div class="group-card" [class.locked]="isGroupLocked(group)">
+                <div class="group-header">
+                    <h3 class="group-title">{{ group.label }}</h3>
+                    @if (groupHint(group)) {
+                    <span class="lock-hint">{{ groupHint(group) }}</span>
+                    }
+                </div>
+                <div class="checkbox-grid">
+                    @for (permission of group.permissions; track permission.code) {
+                    <label class="checkbox" [class.disabled]="isLocked(group, permission)">
+                        <input type="checkbox" [checked]="isOwnerSelected() || isChecked(permission.code)"
+                            [disabled]="isLocked(group, permission)"
+                            (change)="toggle(group, permission, $any($event.target).checked)" />
+                        <span>{{ permission.label }}</span>
+                    </label>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Save bar -->
+        @if (!isOwnerSelected()) {
+        <div class="save-bar">
+            <button type="button" class="btn btn-secondary" [disabled]="!dirty() || saving()" (click)="resetDraft()">
+                Discard Changes
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="!dirty() || saving()" (click)="save()">
+                @if (saving()) {
+                <span>Saving…</span>
+                } @else {
+                <span>Save {{ selectedDesignation() }} Permissions</span>
+                }
+            </button>
+        </div>
+        }
+        }
+    </div>
+</app-dashboard-layout>

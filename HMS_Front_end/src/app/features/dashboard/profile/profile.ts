@@ -11,6 +11,7 @@ import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/da
 import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -42,6 +43,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly employeeService = inject(EmployeeService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly formDraft = inject(FormDraftService);
@@ -52,8 +54,15 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   saving = signal(false);
   submittedOk = false;
 
-  // OWNER and ADMIN update their profile directly; staff go through approval
-  isPrivileged = computed(() => this.authService.isSuperUser());
+  // The direct permission saves immediately while the request permission goes through approval
+  isPrivileged = computed(() =>
+    this.permissionService.can('UPDATE_SELF_DIRECT'),
+  );
+
+  // Without either self-update permission the edit form stays hidden
+  canUpdateSelf = computed(() =>
+    this.permissionService.canAny(['UPDATE_SELF', 'UPDATE_SELF_DIRECT']),
+  );
 
   profileForm: FormGroup;
   attempted = false;
@@ -149,9 +158,9 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(
           res.message ||
-            (this.isPrivileged()
-              ? 'Profile updated successfully.'
-              : 'Profile change request submitted for admin approval.'),
+          (this.isPrivileged()
+            ? 'Profile updated successfully.'
+            : 'Profile change request submitted for admin approval.'),
         );
         this.profileForm.markAsPristine();
         this.baseline = JSON.stringify(this.profileForm.getRawValue());
@@ -162,8 +171,8 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
             next: (r) => this.profile.set(r.data.user.profile),
           });
           this.authService.refreshCurrentUser().subscribe({
-            next: () => {},
-            error: () => {},
+            next: () => { },
+            error: () => { },
           });
         }
       },

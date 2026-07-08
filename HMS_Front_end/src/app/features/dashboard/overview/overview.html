@@ -11,115 +11,93 @@
     </div>
 
     @if (loading()) {
-      <div class="loading-box">Loading overview…</div>
+    <div class="loading-box">Loading overview…</div>
     } @else {
 
-      <!-- Stats grid -->
-      <div class="stats-grid">
-        @if (isOwnerOrAdmin()) {
-          <a routerLink="/dashboard/employees" class="stat-card stat-card--link">
-            <span class="stat-label">{{ isOwner() ? 'Active Employees' : 'Active Staff' }}</span>
-            <span class="stat-value">{{ activeEmployees() ?? '—' }}</span>
-          </a>
-          <a routerLink="/dashboard/approvals" class="stat-card stat-card--link stat-card--warning">
-            <span class="stat-label">Pending Requests</span>
-            <span class="stat-value">{{ pendingApprovals() ?? '—' }}</span>
-          </a>
-        }
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      @if (isOwnerOrAdmin()) {
+      <a routerLink="/dashboard/employees" class="stat-card stat-card--link">
+        <span class="stat-label">{{ isOwner() ? 'Active Employees' : 'Active Staff' }}</span>
+        <span class="stat-value">{{ activeEmployees() ?? '—' }}</span>
+      </a>
+      <a routerLink="/dashboard/approvals" class="stat-card stat-card--link stat-card--warning">
+        <span class="stat-label">Pending Requests</span>
+        <span class="stat-value">{{ pendingApprovals() ?? '—' }}</span>
+      </a>
+      }
 
-        @if (hasReceptionAccess()) {
-          <a routerLink="/dashboard/patients" class="stat-card stat-card--link">
-            <span class="stat-label">Patients</span>
-            <span class="stat-value">{{ totalPatients() ?? '—' }}</span>
-          </a>
-          <a
-            routerLink="/dashboard/appointments"
-            [queryParams]="{ status: 'BOOKED' }"
-            class="stat-card stat-card--link"
-          >
-            <span class="stat-label">Booked Appointments</span>
-            <span class="stat-value">{{ bookedAppointments() ?? '—' }}</span>
-          </a>
-        }
+      @if (hasReceptionAccess()) {
+      <a routerLink="/dashboard/patients" class="stat-card stat-card--link">
+        <span class="stat-label">Patients</span>
+        <span class="stat-value">{{ totalPatients() ?? '—' }}</span>
+      </a>
+      <a routerLink="/dashboard/appointments" [queryParams]="{ status: 'BOOKED' }" class="stat-card stat-card--link">
+        <span class="stat-label">Booked Appointments</span>
+        <span class="stat-value">{{ bookedAppointments() ?? '—' }}</span>
+      </a>
+      }
 
-        @if (isDoctor()) {
-          <a
-            routerLink="/dashboard/appointments"
-            [queryParams]="{ tab: 'today' }"
-            class="stat-card stat-card--link"
-          >
-            <span class="stat-label">My Appointments Today</span>
-            <span class="stat-value">{{ myAppointmentsToday() ?? '—' }}</span>
-          </a>
-          <a
-            routerLink="/dashboard/appointments"
-            [queryParams]="{ tab: 'upcoming' }"
-            class="stat-card stat-card--link"
-          >
-            <span class="stat-label">Upcoming Appointments</span>
-            <span class="stat-value">{{ myAppointmentsUpcoming() ?? '—' }}</span>
-          </a>
-          <a
-            routerLink="/dashboard/appointments"
-            [queryParams]="{ tab: 'past' }"
-            class="stat-card stat-card--link"
-            [class.stat-card--warning]="(myAppointmentsPastDue() ?? 0) > 0"
-          >
-            <span class="stat-label">Past Due</span>
-            <span class="stat-value">{{ myAppointmentsPastDue() ?? '—' }}</span>
-          </a>
+      @if (isDoctor()) {
+      <a routerLink="/dashboard/appointments" [queryParams]="{ tab: 'today' }" class="stat-card stat-card--link">
+        <span class="stat-label">My Appointments Today</span>
+        <span class="stat-value">{{ myAppointmentsToday() ?? '—' }}</span>
+      </a>
+      <a routerLink="/dashboard/appointments" [queryParams]="{ tab: 'upcoming' }" class="stat-card stat-card--link">
+        <span class="stat-label">Upcoming Appointments</span>
+        <span class="stat-value">{{ myAppointmentsUpcoming() ?? '—' }}</span>
+      </a>
+      <a routerLink="/dashboard/appointments" [queryParams]="{ tab: 'past' }" class="stat-card stat-card--link"
+        [class.stat-card--warning]="(myAppointmentsPastDue() ?? 0) > 0">
+        <span class="stat-label">Past Due</span>
+        <span class="stat-value">{{ myAppointmentsPastDue() ?? '—' }}</span>
+      </a>
+      }
+    </div>
+
+    <!-- Recent activity (audit permission holders) -->
+    @if (canViewAudit()) {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Recent Activity</h3>
+      </div>
+      <div class="card-body">
+        @if (loadingAudit()) {
+        <p class="muted">Loading…</p>
+        } @else if (auditLogs().length === 0) {
+        <p class="muted">No activity yet.</p>
+        } @else {
+        <ul class="activity-list">
+          @for (log of auditLogs(); track trackByAudit($index, log)) {
+          <li class="activity-item">
+            <div class="activity-main">
+              <span class="activity-action" [class.activity-action--danger]="isFailureAction(log.action)">{{
+                actionLabel(log.action) }}</span>
+              <span class="activity-message">{{ log.message }}</span>
+            </div>
+            <div class="activity-meta">
+              @if (log.actorName) {
+              <span>{{ log.actorName }}</span>
+              @if (log.actorDesignation) {
+              <span class="dot">·</span>
+              <span>{{ log.actorDesignation }}</span>
+              }
+              <span class="dot">·</span>
+              }
+              <span>{{ log.created_at | date: 'medium' }}</span>
+            </div>
+          </li>
+          }
+        </ul>
+
+        @if (auditTotalPages() > 1) {
+        <app-pagination [page]="auditPage()" [totalPages]="auditTotalPages()" [total]="auditTotal()"
+          [disabled]="loadingAudit()" (pageChange)="goToAuditPage($event)" />
+        }
         }
       </div>
-
-      <!-- Recent activity (admin / owner) -->
-      @if (isOwnerOrAdmin()) {
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Recent Activity</h3>
-          </div>
-          <div class="card-body">
-            @if (loadingAudit()) {
-              <p class="muted">Loading…</p>
-            } @else if (auditLogs().length === 0) {
-              <p class="muted">No activity yet.</p>
-            } @else {
-              <ul class="activity-list">
-                @for (log of auditLogs(); track trackByAudit($index, log)) {
-                  <li class="activity-item">
-                    <div class="activity-main">
-                      <span
-                        class="activity-action"
-                        [class.activity-action--danger]="isFailureAction(log.action)"
-                      >{{ actionLabel(log.action) }}</span>
-                      <span class="activity-message">{{ log.message }}</span>
-                    </div>
-                    <div class="activity-meta">
-                      @if (log.actorName) {
-                        <span>{{ log.actorName }}</span>
-                        @if (log.actorDesignation) {
-                          <span class="dot">·</span>
-                          <span>{{ log.actorDesignation }}</span>
-                        }
-                        <span class="dot">·</span>
-                      }
-                      <span>{{ log.created_at | date: 'medium' }}</span>
-                    </div>
-                  </li>
-                }
-              </ul>
-
-              @if (auditTotalPages() > 1) {
-                <app-pagination
-                  [page]="auditPage()"
-                  [totalPages]="auditTotalPages()"
-                  [total]="auditTotal()"
-                  [disabled]="loadingAudit()"
-                  (pageChange)="goToAuditPage($event)" />
-              }
-            }
-          </div>
-        </div>
-      }
+    </div>
+    }
     }
   </div>
 </app-dashboard-layout>

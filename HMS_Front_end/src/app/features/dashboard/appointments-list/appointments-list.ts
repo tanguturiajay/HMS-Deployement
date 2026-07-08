@@ -9,6 +9,7 @@ import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -41,6 +42,7 @@ export class AppointmentsListComponent implements OnInit {
   private readonly appointmentService = inject(AppointmentService);
   private readonly dashboardService = inject(DashboardService);
   private readonly authService = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
@@ -84,12 +86,13 @@ export class AppointmentsListComponent implements OnInit {
   total = signal(0);
 
   isDoctor = computed(() => this.authService.getDesignation() === 'DOCTOR');
-  hasReceptionAccess = computed(() => {
-    const d = this.authService.getDesignation();
-    return (
-      d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST'
-    );
-  });
+
+  // The all-scope drives the full list while the my-scope falls back to the own feed
+  canViewAll = computed(() =>
+    this.permissionService.can('VIEW_ALL_APPOINTMENTS'),
+  );
+  canBook = computed(() => this.permissionService.can('CREATE_APPOINTMENT'));
+  canCancel = computed(() => this.permissionService.can('CANCEL_APPOINTMENT'));
 
   // Doctor tab badge counts (server totals, independent of the current page)
   tabCounts = signal<Record<DoctorTab, number>>({
@@ -173,8 +176,8 @@ export class AppointmentsListComponent implements OnInit {
   load(): void {
     this.loading.set(true);
 
-    if (this.isDoctor()) {
-      // Server-side per-tab pagination for the doctor view
+    if (!this.canViewAll()) {
+      // Server-side per-tab pagination for the own-appointments feed
       this.appointmentService
         .getMyAppointments(this.page(), this.limit, { tab: this.doctorTab() })
         .subscribe({

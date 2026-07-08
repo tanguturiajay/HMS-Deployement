@@ -13,9 +13,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { EMPTY, interval, catchError, startWith, switchMap } from 'rxjs';
+import { EMPTY, interval, catchError, merge, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { SidebarNode } from '../../../core/models/node.model';
 
 // Dynamic sidebar; menu items load from /nodes/my-nodes with Overview and Profile as defaults
@@ -30,6 +31,7 @@ import { SidebarNode } from '../../../core/models/node.model';
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly nodeService = inject(NodeService);
+  private readonly permissionService = inject(PermissionService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -93,12 +95,20 @@ export class SidebarComponent implements OnInit {
       this.defaultNodes.map((n) => n.path.toLowerCase()),
     );
 
-    // Poll the backend so a newly granted node appears without a reload while a failed tick is swallowed so the current items stay put
+    // Poll the backend so newly granted nodes and permissions apply without a reload while a failed tick is swallowed so the current state stays put
     interval(this.nodeRefreshMs)
       .pipe(
         startWith(0),
         switchMap(() =>
-          this.nodeService.refreshMyNodes().pipe(catchError(() => EMPTY)),
+          merge(
+            this.nodeService.refreshMyNodes().pipe(catchError(() => EMPTY)),
+            this.permissionService
+              .refreshMyPermissions()
+              .pipe(
+                catchError(() => EMPTY),
+                switchMap(() => EMPTY),
+              ),
+          ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -160,6 +170,10 @@ export class SidebarComponent implements OnInit {
       '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     user:
       '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    'heart-pulse':
+      '<path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3"/><path d="M3.2 12h5.3l1.5-3 3 6 1.5-3h5.3"/>',
+    key:
+      '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 8.8-8.8"/><path d="m15 5 3 3"/><path d="m17.5 7.5 2-2"/>',
     'user-plus':
       '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>',
     'check-circle':

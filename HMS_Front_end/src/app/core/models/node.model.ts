@@ -15,12 +15,17 @@ export interface MenuNode extends SidebarNode {
   updated_at?: string;
 }
 
-// Management plane sidebar paths whose access stays fixed to owner and admin with designations locked in the editor so they never become dead links
-export const CONTROL_PLANE_PATHS = new Set<string>([
+// System sidebar paths whose access stays locked to the owner
+export const OWNER_ONLY_PATHS = new Set<string>([
+  '/dashboard/menu-nodes',
+  '/dashboard/permissions',
+]);
+
+// Management sidebar paths grantable to owner and admin only, never to staff
+export const ADMIN_MAX_PATHS = new Set<string>([
   '/dashboard/admins',
   '/dashboard/employees',
   '/dashboard/approvals',
-  '/dashboard/menu-nodes',
 ]);
 
 // Every designation that may be granted access to a node

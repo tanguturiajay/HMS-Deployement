@@ -17,9 +17,10 @@ import { ConfirmModalService } from '../../../core/services/confirm-modal.servic
 import { APP_MESSAGES } from '../../../core/constants/messages';
 import { Designation } from '../../../core/models/employee.model';
 import {
-  CONTROL_PLANE_PATHS,
+  ADMIN_MAX_PATHS,
   MenuNode,
   NODE_DESIGNATIONS,
+  OWNER_ONLY_PATHS,
 } from '../../../core/models/node.model';
 
 // OWNER-only management page for the sidebar menu nodes (mirrors the employees page)
@@ -161,9 +162,21 @@ export class MenuNodesComponent implements OnInit {
     this.formOpen.set(false);
   }
 
-  // Management nodes stay OWNER/ADMIN-only so their designations can't be edited
+  // System nodes stay owner-locked so their designations can't be edited
   isLockedNode(): boolean {
-    return CONTROL_PLANE_PATHS.has(this.formPath().trim());
+    return OWNER_ONLY_PATHS.has(this.formPath().trim());
+  }
+
+  // Management nodes cap out at ADMIN so staff can never be granted them
+  isAdminMaxNode(): boolean {
+    return ADMIN_MAX_PATHS.has(this.formPath().trim());
+  }
+
+  isDesignationLocked(d: Designation): boolean {
+    if (this.isLockedNode()) {
+      return true;
+    }
+    return this.isAdminMaxNode() && d !== 'OWNER' && d !== 'ADMIN';
   }
 
   isDesignationSelected(d: Designation): boolean {
@@ -171,7 +184,7 @@ export class MenuNodesComponent implements OnInit {
   }
 
   toggleDesignation(d: Designation, checked: boolean): void {
-    if (this.isLockedNode()) {
+    if (this.isDesignationLocked(d)) {
       return;
     }
     this.formDesignations.update((list) =>
@@ -207,16 +220,16 @@ export class MenuNodesComponent implements OnInit {
     // The path is never sent on update — it cannot be changed after creation
     const request = isEdit
       ? this.nodeService.updateNode(this.editingNodeId()!, {
-          name,
-          allowedDesignations,
-          ...(icon ? { icon } : {}),
-        })
+        name,
+        allowedDesignations,
+        ...(icon ? { icon } : {}),
+      })
       : this.nodeService.createNode({
-          name,
-          path,
-          allowedDesignations,
-          ...(icon ? { icon } : {}),
-        });
+        name,
+        path,
+        allowedDesignations,
+        ...(icon ? { icon } : {}),
+      });
 
     request.subscribe({
       next: (res) => {
@@ -224,9 +237,9 @@ export class MenuNodesComponent implements OnInit {
         this.formOpen.set(false);
         this.toast.success(
           res.message ||
-            (this.formMode() === 'edit'
-              ? APP_MESSAGES.NODE_UPDATED
-              : APP_MESSAGES.NODE_CREATED),
+          (this.formMode() === 'edit'
+            ? APP_MESSAGES.NODE_UPDATED
+            : APP_MESSAGES.NODE_CREATED),
         );
         this.load();
       },

@@ -7,7 +7,7 @@ const emailTemplates = require("../utils/emailTemplates");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const getCurrentUser = require("../utils/getCurrentUser");
-const { RESTRICTED_ROLES_SET } = require("../constants/domain");
+const { hasPermission } = require("../middlewares/requirePermission");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -87,10 +87,8 @@ exports.profileUpdate = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.EMPLOYEE.NO_VALID_CHANGES);
     }
 
-    // OWNER and ADMIN directly update their profile, no wait for approval
-    const isPrivileged = (req.user.roles || []).some((role) =>
-        RESTRICTED_ROLES_SET.has(role)
-    );
+    // The direct permission saves immediately, no wait for approval
+    const isPrivileged = await hasPermission(req, "UPDATE_SELF_DIRECT");
 
     if (isPrivileged) {
         Object.keys(requestedChanges).forEach((field) => {

@@ -1,40 +1,25 @@
 <app-dashboard-layout pageTitle="Appointments">
   <div class="page">
 
-    <!-- Doctor view: tabs -->
-    @if (isDoctor()) {
+    <!-- Own-appointments feed: tabs -->
+    @if (!canViewAll()) {
     <div class="tabs">
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="doctorTab() === 'today'"
-        (click)="switchTab('today')">
+      <button type="button" class="tab-btn" [class.active]="doctorTab() === 'today'" (click)="switchTab('today')">
         Today
         <span class="tab-count">{{ doctorTabCount('today') }}</span>
       </button>
 
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="doctorTab() === 'upcoming'"
-        (click)="switchTab('upcoming')">
+      <button type="button" class="tab-btn" [class.active]="doctorTab() === 'upcoming'" (click)="switchTab('upcoming')">
         Upcoming
         <span class="tab-count">{{ doctorTabCount('upcoming') }}</span>
       </button>
 
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="doctorTab() === 'past'"
-        (click)="switchTab('past')">
+      <button type="button" class="tab-btn" [class.active]="doctorTab() === 'past'" (click)="switchTab('past')">
         Past Due
         <span class="tab-count">{{ doctorTabCount('past') }}</span>
       </button>
 
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="doctorTab() === 'completed'"
+      <button type="button" class="tab-btn" [class.active]="doctorTab() === 'completed'"
         (click)="switchTab('completed')">
         Completed
         <span class="tab-count">{{ doctorTabCount('completed') }}</span>
@@ -42,32 +27,20 @@
     </div>
     }
 
-    <!-- Reception view: filters + book button -->
-    @if (hasReceptionAccess()) {
+    <!-- Full-list view: filters + book button -->
+    @if (canViewAll()) {
     <div class="toolbar">
       <div class="toolbar-filters">
 
-        <input
-          type="text"
-          class="form-input toolbar-filter"
-          placeholder="Patient UHID"
-          aria-label="Search by patient UHID"
-          [ngModel]="patientSearch()"
-          (ngModelChange)="onPatientSearch($event)" />
+        <input type="text" class="form-input toolbar-filter" placeholder="Patient UHID"
+          aria-label="Search by patient UHID" [ngModel]="patientSearch()" (ngModelChange)="onPatientSearch($event)" />
 
-        <input
-          type="text"
-          class="form-input toolbar-filter toolbar-search"
-          placeholder="Doctor employee code"
-          aria-label="Search by doctor employee code"
-          [ngModel]="doctorSearch()"
+        <input type="text" class="form-input toolbar-filter toolbar-search" placeholder="Doctor employee code"
+          aria-label="Search by doctor employee code" [ngModel]="doctorSearch()"
           (ngModelChange)="onDoctorSearch($event)" />
 
         <label for="statusFilter" class="sr-only">Filter by status</label>
-        <select
-          id="statusFilter"
-          class="form-select toolbar-filter"
-          [value]="statusFilter()"
+        <select id="statusFilter" class="form-select toolbar-filter" [value]="statusFilter()"
           (change)="onStatusChange($any($event.target).value)">
 
           <option value="">All Statuses</option>
@@ -80,29 +53,22 @@
 
         </select>
 
-        <input
-          type="date"
-          class="form-input toolbar-filter"
-          aria-label="Date Filter"
-          [value]="dateFilter()"
+        <input type="date" class="form-input toolbar-filter" aria-label="Date Filter" [value]="dateFilter()"
           (change)="onDateChange($any($event.target).value)" />
 
         @if (hasActiveFilters()) {
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm"
-          (click)="clearAllFilters()">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="clearAllFilters()">
           Clear filters
         </button>
         }
 
       </div>
 
-      <a
-        routerLink="/dashboard/appointments/book"
-        class="btn btn-primary">
+      @if (canBook()) {
+      <a routerLink="/dashboard/appointments/book" class="btn btn-primary">
         + Book Appointment
       </a>
+      }
     </div>
     }
 
@@ -132,12 +98,7 @@
 
         <tbody>
           @for (a of appointments(); track trackById($index, a)) {
-          <tr
-            class="clickable"
-            tabindex="0"
-            (click)="open(a)"
-            (keydown.enter)="open(a)"
-            (keydown.space)="open(a)">
+          <tr class="clickable" tabindex="0" (click)="open(a)" (keydown.enter)="open(a)" (keydown.space)="open(a)">
 
             <td>{{ a.appointmentId }}</td>
             <td>{{ a.patient?.name || a.patientUHID }}</td>
@@ -152,11 +113,8 @@
             </td>
 
             <td class="row-actions">
-              @if (hasReceptionAccess() && a.status === 'BOOKED' && !startTimePassed(a)) {
-              <button
-                type="button"
-                class="btn btn-sm btn-danger-outline"
-                [disabled]="busyId() !== null"
+              @if (canCancel() && a.status === 'BOOKED' && !startTimePassed(a)) {
+              <button type="button" class="btn btn-sm btn-danger-outline" [disabled]="busyId() !== null"
                 (click)="cancel(a, $event)">
                 @if (busyId() === a.appointmentId && busyAction() === 'cancel') {
                 <span>Cancelling…</span>
@@ -174,11 +132,7 @@
     </div>
 
     @if (totalPages() > 1) {
-    <app-pagination
-      [page]="page()"
-      [totalPages]="totalPages()"
-      [total]="total()"
-      (pageChange)="goToPage($event)" />
+    <app-pagination [page]="page()" [totalPages]="totalPages()" [total]="total()" (pageChange)="goToPage($event)" />
     }
 
     }

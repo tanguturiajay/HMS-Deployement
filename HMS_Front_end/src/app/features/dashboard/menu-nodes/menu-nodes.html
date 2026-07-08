@@ -3,12 +3,8 @@
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-filters">
-        <input
-          type="text"
-          class="form-input toolbar-search"
-          placeholder="Search by name, path, or ID..."
-          (input)="onSearch($any($event.target).value)"
-        />
+        <input type="text" class="form-input toolbar-search" placeholder="Search by name, path, or ID..."
+          (input)="onSearch($any($event.target).value)" />
       </div>
       <button type="button" class="btn btn-primary" (click)="openCreate()">
         + Create Menu Node
@@ -16,230 +12,201 @@
     </div>
 
     @if (loading()) {
-      <div class="loading-box">Loading menu nodes…</div>
+    <div class="loading-box">Loading menu nodes…</div>
     } @else if (nodes().length === 0) {
-      <div class="empty-box">
-        <p>No menu nodes found.</p>
-      </div>
+    <div class="empty-box">
+      <p>No menu nodes found.</p>
+    </div>
     } @else {
-      <div class="table-card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Node ID</th>
-              <th>Name</th>
-              <th>Path</th>
-              <th>Icon</th>
-              <th>Access</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of nodes(); track trackByNodeId($index, item)) {
-              <tr (click)="open(item)" (keydown.enter)="open(item)" (keydown.space)="open(item); $event.preventDefault()" class="clickable" tabindex="0">
-                <td>{{ item.nodeId }}</td>
-                <td>{{ item.name }}</td>
-                <td><code class="path">{{ item.path }}</code></td>
-                <td>{{ item.icon || '—' }}</td>
-                <td>
-                  <span class="badge">{{ item.allowedDesignations.length }} role(s)</span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Node ID</th>
+            <th>Name</th>
+            <th>Path</th>
+            <th>Icon</th>
+            <th>Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of nodes(); track trackByNodeId($index, item)) {
+          <tr (click)="open(item)" (keydown.enter)="open(item)" (keydown.space)="open(item); $event.preventDefault()"
+            class="clickable" tabindex="0">
+            <td>{{ item.nodeId }}</td>
+            <td>{{ item.name }}</td>
+            <td><code class="path">{{ item.path }}</code></td>
+            <td>{{ item.icon || '—' }}</td>
+            <td>
+              <span class="badge">{{ item.allowedDesignations.length }} role(s)</span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-      @if (totalPages() > 1) {
-        <app-pagination
-          [page]="page()"
-          [totalPages]="totalPages()"
-          [total]="total()"
-          (pageChange)="goToPage($event)" />
-      }
+    @if (totalPages() > 1) {
+    <app-pagination [page]="page()" [totalPages]="totalPages()" [total]="total()" (pageChange)="goToPage($event)" />
+    }
     }
   </div>
 
   <!-- Detail modal -->
   @if (selected(); as item) {
-    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
-      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">{{ item.name }}</h3>
-            <p class="modal-sub">{{ item.nodeId }}</p>
-          </div>
-          <div class="modal-header-actions">
-            <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="openEdit(item)">
-              Edit
-            </button>
-            <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
-          </div>
+  <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+    <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">{{ item.name }}</h3>
+          <p class="modal-sub">{{ item.nodeId }}</p>
         </div>
-
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail">
-              <span class="detail-label">Node ID</span>
-              <span class="detail-value">{{ item.nodeId }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Name</span>
-              <span class="detail-value">{{ item.name }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Path</span>
-              <span class="detail-value">{{ item.path }}</span>
-            </div>
-            <div class="detail">
-              <span class="detail-label">Icon</span>
-              <span class="detail-value">{{ item.icon || '—' }}</span>
-            </div>
-            @if (item.created_at) {
-              <div class="detail">
-                <span class="detail-label">Created</span>
-                <span class="detail-value">{{ item.created_at | date: 'medium' }}</span>
-              </div>
-            }
-            @if (item.updated_at) {
-              <div class="detail">
-                <span class="detail-label">Updated</span>
-                <span class="detail-value">{{ item.updated_at | date: 'medium' }}</span>
-              </div>
-            }
-          </div>
-
-          <h4 class="detail-section">Allowed Designations</h4>
-          <div class="chip-list">
-            @for (d of item.allowedDesignations; track d) {
-              <span class="badge">{{ d }}</span>
-            } @empty {
-              <span class="muted">No designations assigned</span>
-            }
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
-            Close
+        <div class="modal-header-actions">
+          <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="openEdit(item)">
+            Edit
           </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            [disabled]="deleting()"
-            (click)="deleteNode(item)"
-          >
-            @if (deleting()) {
-              <span>Deleting…</span>
-            } @else {
-              <span>Delete</span>
-            }
-          </button>
+          <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
         </div>
       </div>
+
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail">
+            <span class="detail-label">Node ID</span>
+            <span class="detail-value">{{ item.nodeId }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Name</span>
+            <span class="detail-value">{{ item.name }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Path</span>
+            <span class="detail-value">{{ item.path }}</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Icon</span>
+            <span class="detail-value">{{ item.icon || '—' }}</span>
+          </div>
+          @if (item.created_at) {
+          <div class="detail">
+            <span class="detail-label">Created</span>
+            <span class="detail-value">{{ item.created_at | date: 'medium' }}</span>
+          </div>
+          }
+          @if (item.updated_at) {
+          <div class="detail">
+            <span class="detail-label">Updated</span>
+            <span class="detail-value">{{ item.updated_at | date: 'medium' }}</span>
+          </div>
+          }
+        </div>
+
+        <h4 class="detail-section">Allowed Designations</h4>
+        <div class="chip-list">
+          @for (d of item.allowedDesignations; track d) {
+          <span class="badge">{{ d }}</span>
+          } @empty {
+          <span class="muted">No designations assigned</span>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
+          Close
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="deleteNode(item)">
+          @if (deleting()) {
+          <span>Deleting…</span>
+          } @else {
+          <span>Delete</span>
+          }
+        </button>
+      </div>
     </div>
+  </div>
   }
 
   <!-- Create / edit form modal -->
   @if (formOpen()) {
-    <div class="modal-backdrop" (click)="closeForm()" (keydown.escape)="closeForm()">
-      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">
-              {{ formMode() === 'edit' ? 'Edit Menu Node' : 'Create Menu Node' }}
-            </h3>
-            @if (formMode() === 'edit') {
-              <p class="modal-sub">{{ editingNodeId() }}</p>
-            }
-          </div>
-          <div class="modal-header-actions">
-            <button type="button" class="modal-close" [disabled]="saving()" (click)="closeForm()">✕</button>
-          </div>
+  <div class="modal-backdrop" (click)="closeForm()" (keydown.escape)="closeForm()">
+    <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">
+            {{ formMode() === 'edit' ? 'Edit Menu Node' : 'Create Menu Node' }}
+          </h3>
+          @if (formMode() === 'edit') {
+          <p class="modal-sub">{{ editingNodeId() }}</p>
+          }
         </div>
-
-        <div class="modal-body">
-          <form (ngSubmit)="save()">
-            <div class="form-group">
-              <label class="form-label" for="node-name">Name</label>
-              <input
-                id="node-name"
-                type="text"
-                class="form-input"
-                placeholder="e.g. Reports"
-                [value]="formName()"
-                (input)="formName.set($any($event.target).value)"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="node-path">Path</label>
-              <input
-                id="node-path"
-                type="text"
-                class="form-input"
-                placeholder="/dashboard/reports"
-                [value]="formPath()"
-                [disabled]="formMode() === 'edit'"
-                (input)="formPath.set($any($event.target).value)"
-              />
-              @if (formMode() === 'edit') {
-                <small class="form-hint">The path is fixed and cannot be changed after creation.</small>
-              } @else {
-                <small class="form-hint">Must start with / (letters, numbers, - and /).</small>
-              }
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="node-icon">Icon (optional)</label>
-              <input
-                id="node-icon"
-                type="text"
-                class="form-input"
-                placeholder="e.g. file-text"
-                [value]="formIcon()"
-                (input)="formIcon.set($any($event.target).value)"
-              />
-            </div>
-
-            <div class="form-group">
-              <span class="form-label">Allowed Designations</span>
-              <div class="checkbox-grid">
-                @for (d of allDesignations; track d) {
-                  <label class="checkbox">
-                    <input
-                      type="checkbox"
-                      [checked]="isDesignationSelected(d)"
-                      [disabled]="isLockedNode()"
-                      (change)="toggleDesignation(d, $any($event.target).checked)"
-                    />
-                    <span>{{ d }}</span>
-                  </label>
-                }
-              </div>
-              @if (isLockedNode()) {
-                <small class="form-hint">This is a management node; access is fixed to OWNER and ADMIN.</small>
-              }
-            </div>
-
-            @if (formError()) {
-              <p class="form-error">{{ formError() }}</p>
-            }
-          </form>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="closeForm()">
-            Cancel
-          </button>
-          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
-            @if (saving()) {
-              <span>Saving…</span>
-            } @else {
-              <span>{{ formMode() === 'edit' ? 'Save Changes' : 'Create Node' }}</span>
-            }
-          </button>
+        <div class="modal-header-actions">
+          <button type="button" class="modal-close" [disabled]="saving()" (click)="closeForm()">✕</button>
         </div>
       </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="save()">
+          <div class="form-group">
+            <label class="form-label" for="node-name">Name</label>
+            <input id="node-name" type="text" class="form-input" placeholder="e.g. Reports" [value]="formName()"
+              (input)="formName.set($any($event.target).value)" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="node-path">Path</label>
+            <input id="node-path" type="text" class="form-input" placeholder="/dashboard/reports" [value]="formPath()"
+              [disabled]="formMode() === 'edit'" (input)="formPath.set($any($event.target).value)" />
+            @if (formMode() === 'edit') {
+            <small class="form-hint">The path is fixed and cannot be changed after creation.</small>
+            } @else {
+            <small class="form-hint">Must start with / (letters, numbers, - and /).</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="node-icon">Icon (optional)</label>
+            <input id="node-icon" type="text" class="form-input" placeholder="e.g. file-text" [value]="formIcon()"
+              (input)="formIcon.set($any($event.target).value)" />
+          </div>
+
+          <div class="form-group">
+            <span class="form-label">Allowed Designations</span>
+            <div class="checkbox-grid">
+              @for (d of allDesignations; track d) {
+              <label class="checkbox" [class.disabled]="isDesignationLocked(d)">
+                <input type="checkbox" [checked]="isDesignationSelected(d)" [disabled]="isDesignationLocked(d)"
+                  (change)="toggleDesignation(d, $any($event.target).checked)" />
+                <span>{{ d }}</span>
+              </label>
+              }
+            </div>
+            @if (isLockedNode()) {
+            <small class="form-hint">This is a system node; access is fixed to OWNER.</small>
+            } @else if (isAdminMaxNode()) {
+            <small class="form-hint">This is a management node; it can be granted to OWNER and ADMIN only.</small>
+            }
+          </div>
+
+          @if (formError()) {
+          <p class="form-error">{{ formError() }}</p>
+          }
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="closeForm()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          @if (saving()) {
+          <span>Saving…</span>
+          } @else {
+          <span>{{ formMode() === 'edit' ? 'Save Changes' : 'Create Node' }}</span>
+          }
+        </button>
+      </div>
     </div>
+  </div>
   }
 </app-dashboard-layout>

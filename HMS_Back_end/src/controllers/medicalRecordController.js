@@ -10,6 +10,7 @@ const slotInstantMs = require("../utils/slotInstantMs");
 const buildMedicalRecordFilter = require("../utils/buildMedicalRecordFilter");
 const paginateMedicalRecords = require("../utils/paginateMedicalRecords");
 const hasFieldChanges = require("../utils/hasFieldChanges");
+const { hasPermission } = require("../middlewares/requirePermission");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -111,6 +112,15 @@ const applyEditableFields = (record, { chiefComplaint, symptoms, diagnosis, advi
 
 const isBlank = (value) => typeof value !== "string" || value.trim() === "";
 
+// 403 with the friend-style missing permission message and machine readable code
+const missingPermissionError = (code) =>
+    new AppError(
+        STATUS.FORBIDDEN,
+        MESSAGES.AUTH.MISSING_PERMISSION([code]),
+        undefined,
+        "FORBIDDEN"
+    );
+
 // Validates required fields and nested record completeness
 const assertRecordComplete = (record) => {
     if (
@@ -167,10 +177,10 @@ const applyFinalizeUpdate = async ({ record, actor }) => {
     const createdByStaff = record.createdByDesignation && record.createdByDesignation !== "DOCTOR";
     const message = createdByStaff
         ? MESSAGES.AUDIT.MEDICAL_RECORD_VERIFIED_FINALIZED(
-              record.createdByDesignation,
-              record.createdByName,
-              record.doctorName
-          )
+            record.createdByDesignation,
+            record.createdByName,
+            record.doctorName
+        )
         : MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_UPDATED_FINALIZED(record.doctorName);
 
     await recordAudit({
@@ -294,13 +304,21 @@ exports.createMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
     }
 
-    // Only the assigned doctor may finalize
+    // The requested status decides which create permission applies
     let recordStatus = "DRAFT";
     if (status === "FINALIZED") {
-        if (!doctorRole) {
+        if (!(await hasPermission(req, "CREATE_AND_FINALIZE_MEDICAL_RECORD"))) {
+            throw missingPermissionError("CREATE_AND_FINALIZE_MEDICAL_RECORD");
+        }
+
+        // Only the assigned doctor may finalize
+        if (appointment.doctorEmployeeId !== req.user.employeeCode) {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.MEDICAL_RECORD.STAFF_CANNOT_FINALIZE);
         }
+
         recordStatus = "FINALIZED";
+    } else if (!(await hasPermission(req, "CREATE_MEDICAL_RECORD_DRAFT"))) {
+        throw missingPermissionError("CREATE_MEDICAL_RECORD_DRAFT");
     }
 
     const record = new MedicalRecord({
@@ -376,12 +394,21 @@ exports.updateMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.ONLY_DRAFT_EDITABLE);
     }
 
+    // Finalizing a draft is the verify step and needs its own permission
     let willFinalize = false;
     if (status === "FINALIZED") {
-        if (!doctorRole) {
+        if (!(await hasPermission(req, "VERIFY_AND_FINALIZE_MEDICAL_RECORD"))) {
+            throw missingPermissionError("VERIFY_AND_FINALIZE_MEDICAL_RECORD");
+        }
+
+        // Only the assigned doctor may finalize
+        if (record.doctorEmployeeId !== req.user.employeeCode) {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.MEDICAL_RECORD.STAFF_CANNOT_FINALIZE);
         }
+
         willFinalize = true;
+    } else if (!(await hasPermission(req, "CREATE_MEDICAL_RECORD_DRAFT"))) {
+        throw missingPermissionError("CREATE_MEDICAL_RECORD_DRAFT");
     }
 
     // Rejects updates with no actual changes
@@ -426,11 +453,12 @@ exports.updateMedicalRecord = async (req, res) => {
     });
 };
 
-// Lists paginated medical records with role-based filtering
+// Lists paginated medical records scoped by the caller's view permission
 exports.listMedicalRecords = async (req, res) => {
 
-    const actor = await resolveActor(req.user);
-    const scopedDoctorId = isDoctorActor(actor) ? req.user.employeeCode : null;
+    // Without the all-scope the caller only sees records where they are the doctor
+    const canViewAll = await hasPermission(req, "VIEW_ALL_MEDICAL_RECORDS");
+    const scopedDoctorId = canViewAll ? null : req.user.employeeCode;
 
     const filter = buildMedicalRecordFilter(req.query, scopedDoctorId);
 
@@ -442,10 +470,8 @@ exports.getMedicalRecordById = async (req, res) => {
 
     const { medicalRecordId } = req.params;
 
-    const actor = await resolveActor(req.user);
-
     const filter = { medicalRecordId, isDeleted: { $ne: true } };
-    if (isDoctorActor(actor)) {
+    if (!(await hasPermission(req, "VIEW_ALL_MEDICAL_RECORDS"))) {
         filter.doctorEmployeeId = req.user.employeeCode;
     }
 
@@ -465,10 +491,8 @@ exports.getMedicalRecordByAppointment = async (req, res) => {
 
     const { appointmentId } = req.params;
 
-    const actor = await resolveActor(req.user);
-
     const filter = { appointmentId, isDeleted: { $ne: true } };
-    if (isDoctorActor(actor)) {
+    if (!(await hasPermission(req, "VIEW_ALL_MEDICAL_RECORDS"))) {
         filter.doctorEmployeeId = req.user.employeeCode;
     }
 

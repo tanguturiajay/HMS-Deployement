@@ -1,0 +1,130 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.loading-box {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    color: #475569;
+    border: 1px dashed #e2e8f0;
+}
+
+.designation-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.designation-chip {
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.1s,
+        color 0.1s;
+}
+
+.designation-chip:hover {
+    background-color: #f8fafc;
+}
+
+.designation-chip.active {
+    background-color: #0f766e;
+    border-color: #0f766e;
+    color: #ffffff;
+}
+
+.info-box {
+    background-color: #f0fdfa;
+    border: 1px solid #99f6e4;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #0f766e;
+    font-size: 0.875rem;
+}
+
+.groups {
+    display: grid;
+    gap: 1rem;
+}
+
+.group-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.group-card.locked {
+    background-color: #f8fafc;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.group-title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.lock-hint {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.5rem;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    cursor: pointer;
+}
+
+.checkbox input {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+.checkbox.disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.checkbox.disabled input {
+    cursor: not-allowed;
+}
+
+.save-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.625rem;
+}

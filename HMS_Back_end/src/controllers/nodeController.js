@@ -1,18 +1,69 @@
 const Node = require("../models/Nodes");
-const Employee = require("../models/Employees");
 const Counter = require("../models/Counter");
+const Permission = require("../models/Permissions");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const parsePagination = require("../utils/parsePagination");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const resolveDesignation = require("../utils/resolveDesignation");
 const nodeAccessCache = require("../utils/nodeAccessCache");
+const permissionCache = require("../utils/permissionCache");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
-const { CONTROL_PLANE_PATHS_SET, RESTRICTED_ROLES_SET } = require("../constants/domain");
+const {
+    OWNER_ONLY_PATHS_SET,
+    ADMIN_MAX_PATHS_SET,
+    RESTRICTED_ROLES_SET
+} = require("../constants/domain");
+const {
+    PERMISSIONS_BY_NODE_PATH,
+    PERMISSION_DESIGNATIONS
+} = require("../constants/permissions");
 
 // Escapes user input so it can be used safely inside a RegExp
 const escapeRegex = (value) => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+// System nodes stay owner-locked and management nodes cap out at ADMIN so staff never see control pages
+const assertGrantableDesignations = (path, allowedDesignations) => {
+    if (OWNER_ONLY_PATHS_SET.has(path)) {
+        const hasNonOwner = allowedDesignations.some(
+            (designation) => designation !== "OWNER"
+        );
+
+        if (hasNonOwner) {
+            throw new AppError(STATUS.BAD_REQUEST, MESSAGES.NODE.OWNER_LOCKED);
+        }
+        return;
+    }
+
+    if (ADMIN_MAX_PATHS_SET.has(path)) {
+        const hasStaffDesignation = allowedDesignations.some(
+            (designation) => !RESTRICTED_ROLES_SET.has(designation)
+        );
+
+        if (hasStaffDesignation) {
+            throw new AppError(STATUS.BAD_REQUEST, MESSAGES.NODE.SYSTEM_LOCKED);
+        }
+    }
+};
+
+// CRUD permissions cannot exist without sidebar access, so losing a node strips the module's codes
+const stripModulePermissions = async (path, designations) => {
+    const moduleCodes = PERMISSIONS_BY_NODE_PATH.get(path);
+    const affected = designations.filter((designation) => designation !== "OWNER");
+
+    if (!moduleCodes || affected.length === 0) {
+        return;
+    }
+
+    await Permission.updateMany(
+        { designation: { $in: affected } },
+        { $pull: { permissions: { $in: moduleCodes } } }
+    );
+
+    permissionCache.invalidate();
+};
 
 // List sidebar nodes with optional search + pagination (OWNER management page)
 exports.getNodes = async (req, res) => {
@@ -66,6 +117,8 @@ exports.createNode = async (req, res) => {
         throw new AppError(STATUS.CONFLICT, MESSAGES.NODE.PATH_EXISTS);
     }
 
+    assertGrantableDesignations(path, allowedDesignations);
+
     // Save the node to mongodb
     const node = await Node.create({
         name,
@@ -115,17 +168,17 @@ exports.updateNode = async (req, res) => {
 
     if (allowedDesignations !== undefined) {
 
-        // Management nodes stay OWNER/ADMIN-only so they never become dead links
-        const existing = await Node.findOne({ nodeId: req.params.nodeId }).select("path");
+        const existing = await Node.findOne({ nodeId: req.params.nodeId })
+            .select("path allowedDesignations");
 
-        if (existing && CONTROL_PLANE_PATHS_SET.has(existing.path)) {
-            const hasStaffDesignation = allowedDesignations.some(
-                (designation) => !RESTRICTED_ROLES_SET.has(designation)
+        if (existing) {
+            assertGrantableDesignations(existing.path, allowedDesignations);
+
+            // Designations losing the node also lose the module's action permissions
+            const removed = existing.allowedDesignations.filter(
+                (designation) => !allowedDesignations.includes(designation)
             );
-
-            if (hasStaffDesignation) {
-                throw new AppError(STATUS.BAD_REQUEST, MESSAGES.NODE.SYSTEM_LOCKED);
-            }
+            await stripModulePermissions(existing.path, removed);
         }
 
         updateData.allowedDesignations = allowedDesignations;
@@ -182,6 +235,9 @@ exports.deleteNode = async (req, res) => {
     // Drop the access cache so the removed node stops granting access immediately
     nodeAccessCache.invalidate();
 
+    // A deleted node leaves nobody with sidebar access, so every designation loses the module's action permissions
+    await stripModulePermissions(deletedNode.path, PERMISSION_DESIGNATIONS);
+
     // After a delete the remaining nodes are renumbered in ascending creation order so node IDs stay gapless and sequential without colliding on the unique index
     const remainingNodes = await Node.find({}).sort({ nodeId: 1 });
 
@@ -220,15 +276,11 @@ exports.deleteNode = async (req, res) => {
 // Get sidebar nodes
 exports.getMyNodes = async (req, res) => {
 
-    const employee = await Employee.findOne({
-        employeeCode: req.user.employeeCode
-    });
+    const designation = await resolveDesignation(req);
 
-    if (!employee) {
+    if (!designation) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
     }
-
-    const designation = employee.designation;
 
     const nodes = await Node.find({
 

@@ -1,6 +1,7 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const buildEmployeeProfile = require("./buildEmployeeProfile");
+const getEffectivePermissions = require("./getEffectivePermissions");
 const AppError = require("./AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
@@ -21,6 +22,7 @@ async function getCurrentUser(employeeCode) {
     }
 
     const profile = buildEmployeeProfile(employee);
+    const permissions = await getEffectivePermissions(user.roles, employee.designation);
 
     return {
         employeeCode: user.employeeCode,
@@ -29,6 +31,7 @@ async function getCurrentUser(employeeCode) {
         roles: user.roles,
         mustChangePassword: user.mustChangePassword,
         lastLoginAt: user.lastLoginAt,
+        permissions,
         profile
     };
 }

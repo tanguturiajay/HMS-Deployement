@@ -29,6 +29,11 @@ export const APP_MESSAGES = {
   LOAD_APPROVALS_FAILED: 'Failed to load approvals.',
   LOAD_PROFILE_FAILED: 'Failed to load profile.',
   LOAD_STATS_FAILED: 'Failed to load statistics.',
+  LOAD_PERMISSIONS_FAILED: 'Failed to load permissions.',
+
+  // Permissions (per-designation action permission management)
+  PERMISSIONS_UPDATED: 'Permissions updated.',
+  PERMISSIONS_UPDATE_FAILED: 'Failed to update permissions.',
 
   // Patients
   PATIENT_CREATED: 'Patient created.',

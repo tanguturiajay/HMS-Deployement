@@ -1,6 +1,6 @@
-const Employee = require("../models/Employees");
 const AppError = require("../utils/AppError");
 const nodeAccessCache = require("../utils/nodeAccessCache");
+const resolveDesignation = require("../utils/resolveDesignation");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
@@ -18,18 +18,16 @@ const authorizeNode = (nodePath) => {
             return next();
         }
 
-        const employee = await Employee.findOne({
-            employeeCode: req.user.employeeCode
-        });
+        const designation = await resolveDesignation(req);
 
-        if (!employee) {
+        if (!designation) {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.ACCESS_DENIED);
         }
 
         const allowedDesignations =
             await nodeAccessCache.getAllowedDesignations(nodePath);
 
-        if (!allowedDesignations?.includes(employee.designation)) {
+        if (!allowedDesignations?.includes(designation)) {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.ACCESS_DENIED);
         }
 

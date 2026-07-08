@@ -2,9 +2,13 @@ const Node = require("../models/Nodes");
 
 // Paths enforced by authorizeNode where a missing node would lock everyone but the owner out of the module so seeding fails fast when one is gone
 const NODE_DRIVEN_PATHS = [
+    "/dashboard/admins",
+    "/dashboard/employees",
+    "/dashboard/approvals",
     "/dashboard/patients",
     "/dashboard/appointments",
-    "/dashboard/medical-records"
+    "/dashboard/medical-records",
+    "/dashboard/permissions"
 ];
 
 // Default sidebar nodes recreated on boot when missing where array order sets the sidebar order by creation time
@@ -30,7 +34,7 @@ const DEFAULT_NODES = [
     {
         name: "Patients",
         path: "/dashboard/patients",
-        icon: "user",
+        icon: "heart-pulse",
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST"]
     },
     {
@@ -50,6 +54,13 @@ const DEFAULT_NODES = [
         name: "Menu Nodes",
         path: "/dashboard/menu-nodes",
         icon: "menu",
+        allowedDesignations: ["OWNER"]
+    },
+    {
+        // Owner-only page for managing action permissions per designation
+        name: "Permissions",
+        path: "/dashboard/permissions",
+        icon: "key",
         allowedDesignations: ["OWNER"]
     }
 ];
@@ -71,6 +82,16 @@ const seedNodes = async () => {
         const node = new Node(nodeData);
         await node.save();
         created += 1;
+    }
+
+    // One-shot icon fix: the old "user" icon duplicated the profile icon, skips owner-customized icons
+    const migrated = await Node.updateOne(
+        { path: "/dashboard/patients", icon: "user" },
+        { $set: { icon: "heart-pulse" } }
+    );
+
+    if (migrated.modifiedCount > 0) {
+        console.log("Patients node icon migrated from user to heart-pulse");
     }
 
     console.log(`Nodes seeded. Created: ${created}, Skipped: ${skipped}`);

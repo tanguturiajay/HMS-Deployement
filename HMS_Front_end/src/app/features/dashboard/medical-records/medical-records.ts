@@ -6,7 +6,7 @@ import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/da
 import { MedicalRecordDetailDialogComponent } from '../../../shared/ui/medical-record-detail-dialog/medical-record-detail-dialog';
 import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import {
@@ -32,7 +32,7 @@ import {
 })
 export class MedicalRecordsComponent implements OnInit {
   private readonly service = inject(MedicalRecordService);
-  private readonly auth = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly route = inject(ActivatedRoute);
@@ -57,7 +57,10 @@ export class MedicalRecordsComponent implements OnInit {
   selected = signal<MedicalRecord | null>(null);
   opening = signal<string | null>(null);
 
-  isDoctor = computed(() => this.auth.getDesignation() === 'DOCTOR');
+  // Without the all-scope the server pins results to the caller's own records
+  canViewAll = computed(() =>
+    this.permissionService.can('VIEW_ALL_MEDICAL_RECORDS'),
+  );
 
   // When opened from a patient profile, the list is pre-filtered to that patient
   scopedToPatient = signal(false);
@@ -91,7 +94,7 @@ export class MedicalRecordsComponent implements OnInit {
     if (this.patientUHID()) filters.patientUHID = this.patientUHID().trim();
     if (this.patientName()) filters.patientName = this.patientName().trim();
     if (this.appointmentId()) filters.appointmentId = this.appointmentId().trim();
-    if (!this.isDoctor()) {
+    if (this.canViewAll()) {
       if (this.doctorEmployeeId())
         filters.doctorEmployeeId = this.doctorEmployeeId().trim();
       if (this.doctorName()) filters.doctorName = this.doctorName().trim();

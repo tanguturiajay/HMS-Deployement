@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
@@ -22,7 +22,7 @@ import {
   formatFoodTiming,
 } from '../../../core/models/medical-record.model';
 
-// Read-only full view of a medical record. Admin/Owner can soft-delete from here.
+// Read-only full view of a medical record. Delete permission holders can soft-delete from here.
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-record-detail-dialog',
@@ -32,7 +32,7 @@ import {
   styleUrl: './medical-record-detail-dialog.css',
 })
 export class MedicalRecordDetailDialogComponent {
-  private readonly auth = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
@@ -52,10 +52,9 @@ export class MedicalRecordDetailDialogComponent {
 
   deleting = signal(false);
 
-  canDelete = computed(() => {
-    const d = this.auth.getDesignation();
-    return d === 'OWNER' || d === 'ADMIN';
-  });
+  canDelete = computed(() =>
+    this.permissionService.can('DELETE_MEDICAL_RECORD'),
+  );
 
   close(): void {
     this.closed.emit();
