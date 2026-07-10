@@ -117,7 +117,7 @@ Additional rules:
 ```
 src/
 ├── api/
-│   └── index.js            # Vercel serverless handler (connects DB, delegates to app)
+│   └── index.js            # connects DB, delegates to app
 ├── app.js                  # Express app: middleware + route mounting
 ├── server.js               # Local entrypoint: connect DB, seed, listen
 ├── config/
@@ -275,7 +275,9 @@ npm run test:coverage  # with coverage
 
 ## Deployment
 
-Configured for **Vercel** serverless deployment via `vercel.json`, which routes
-all traffic to `src/api/index.js`. That handler establishes the MongoDB
-connection per invocation and delegates to the Express `app`. The production
-frontend is configured to call `https://vanguard-hms-rho.vercel.app/api`.
+Configured for **AWS EC2** deployment, where the application is hosted on an EC2 instance running a Node.js environment. The Express backend is managed using **PM2** for process management and served through **Nginx** as a reverse proxy. The MongoDB connection is established when the server starts and remains active for the lifetime of the application process.
+
+Nginx routes incoming HTTP/HTTPS requests to the Express application running on the configured port, ensuring efficient request handling and SSL termination when HTTPS is enabled.
+
+The production frontend is configured to call the backend API using the EC2 Elastic IP: http://16.112.151.129/api
+

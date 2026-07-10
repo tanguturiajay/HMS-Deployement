@@ -47,7 +47,7 @@ API endpoints are defined per build configuration in `src/environments/`:
 | File                          | `production` | `apiUrl`                                  |
 | ----------------------------- | ------------ | ----------------------------------------- |
 | `environment.development.ts`  | `false`      | `http://localhost:5000/api`               |
-| `environment.ts`              | `true`       | `https://vanguard-hms-rho.vercel.app/api` |
+| `environment.ts`              | `true`       | `https://16.112.151.129/api` |
 
 `angular.json` performs a file replacement so production builds use
 `environment.ts` while `ng serve` / development builds use
@@ -149,4 +149,4 @@ Guards (`src/app/core/guards/`):
 npm run build
 ```
 
-Outputs to `dist/`. The production build uses `environment.ts` (Vercel API URL).
+Outputs to `dist/`. The production build uses `environment.ts` (EC2 Instance URL).
