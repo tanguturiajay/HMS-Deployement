@@ -97,8 +97,7 @@ This project is deployed on an AWS EC2 instance for production use. The deployme
 
 Users can access the deployed system through:
 
-- Web / Admin Portal: https://16.112.151.129
-- API Base URL: https://16.112.151.129/api
+- Web / Admin Portal: http://16.112.151.129
 
 This public URL can be shared with users for accessing the hospital management system online.
 
